@@ -1,0 +1,262 @@
+import { Claim, ClaimNote } from '../types/claim';
+
+const notes: ClaimNote[] = [
+  {
+    id: 'note-1',
+    claimId: 'claim-1',
+    content: 'Cliente contactado vía email. Esperando respuesta.',
+    author: 'María González',
+    createdAt: new Date('2025-10-20T10:30:00')
+  },
+  {
+    id: 'note-2',
+    claimId: 'claim-1',
+    content: 'Cliente confirmó recepción del producto defectuoso. Se procede con reemplazo.',
+    author: 'Carlos Ruiz',
+    createdAt: new Date('2025-10-21T14:20:00')
+  },
+  {
+    id: 'note-3',
+    claimId: 'claim-3',
+    content: 'Verificado con logística. El envío se realizó correctamente pero con retraso.',
+    author: 'Ana Martínez',
+    createdAt: new Date('2025-10-19T09:15:00')
+  },
+  {
+    id: 'note-4',
+    claimId: 'claim-5',
+    content: 'Revisión del sistema completada. Error identificado y corregido.',
+    author: 'Luis Fernández',
+    createdAt: new Date('2025-10-18T16:45:00')
+  },
+  {
+    id: 'note-5',
+    claimId: 'claim-7',
+    content: 'Contacto inicial realizado. Cliente solicita devolución completa.',
+    author: 'María González',
+    createdAt: new Date('2025-10-22T08:00:00')
+  }
+];
+
+export const mockClaims: Claim[] = [
+  {
+    id: 'claim-1',
+    subject: 'Producto defectuoso en envío',
+    customerName: 'Juan Pérez',
+    contactInfo: 'juan.perez@email.com',
+    description: 'El producto llegó con daños visibles en el empaque exterior. Al abrirlo, se observó que el artículo principal está roto. Solicito reemplazo inmediato.',
+    status: 'En Proceso',
+    createdAt: new Date('2025-10-20T09:15:00'),
+    updatedAt: new Date('2025-10-21T14:20:00'),
+    notes: notes.filter(n => n.claimId === 'claim-1')
+  },
+  {
+    id: 'claim-2',
+    subject: 'Cobro duplicado en factura',
+    customerName: 'María Rodríguez',
+    contactInfo: '+54 11 4567-8901',
+    description: 'Me cobraron dos veces la misma orden #4521. Necesito que se me devuelva el pago duplicado lo antes posible. Adjunto comprobantes bancarios.',
+    status: 'Nuevo',
+    createdAt: new Date('2025-10-22T11:30:00'),
+    updatedAt: new Date('2025-10-22T11:30:00'),
+    notes: []
+  },
+  {
+    id: 'claim-3',
+    subject: 'Retraso en la entrega',
+    customerName: 'Carlos Gómez',
+    contactInfo: 'carlos.gomez@empresa.com',
+    description: 'Mi pedido tenía fecha de entrega estimada para el 15 de octubre y aún no ha llegado. El tracking muestra que está detenido en el centro de distribución hace 5 días.',
+    status: 'Esperando Respuesta',
+    createdAt: new Date('2025-10-18T14:20:00'),
+    updatedAt: new Date('2025-10-19T09:15:00'),
+    notes: notes.filter(n => n.claimId === 'claim-3')
+  },
+  {
+    id: 'claim-4',
+    subject: 'Artículo incorrecto enviado',
+    customerName: 'Laura Fernández',
+    contactInfo: 'laura.f@email.com',
+    description: 'Pedí una camisa talla M en color azul (SKU: CAM-123-M-AZ) pero recibí una talla L en color rojo. Necesito el cambio por el producto correcto.',
+    status: 'Nuevo',
+    createdAt: new Date('2025-10-22T10:00:00'),
+    updatedAt: new Date('2025-10-22T10:00:00'),
+    notes: []
+  },
+  {
+    id: 'claim-5',
+    subject: 'Error en sistema de puntos',
+    customerName: 'Roberto Silva',
+    contactInfo: '+54 11 5678-9012',
+    description: 'Realicé una compra por $15,000 que debería sumar 1,500 puntos a mi cuenta, pero el sistema solo acreditó 500 puntos. Solicito la corrección correspondiente.',
+    status: 'Resuelto',
+    createdAt: new Date('2025-10-17T16:45:00'),
+    updatedAt: new Date('2025-10-18T16:45:00'),
+    notes: notes.filter(n => n.claimId === 'claim-5')
+  },
+  {
+    id: 'claim-6',
+    subject: 'Producto no coincide con descripción',
+    customerName: 'Ana López',
+    contactInfo: 'ana.lopez@email.com',
+    description: 'El producto recibido no coincide con la descripción del sitio web. Las especificaciones técnicas son diferentes y el material es de menor calidad.',
+    status: 'En Proceso',
+    createdAt: new Date('2025-10-19T13:00:00'),
+    updatedAt: new Date('2025-10-20T10:30:00'),
+    notes: []
+  },
+  {
+    id: 'claim-7',
+    subject: 'Solicitud de reembolso',
+    customerName: 'Diego Martínez',
+    contactInfo: 'diego.m@empresa.com',
+    description: 'Compré un producto hace 3 días pero encontré el mismo artículo en otra tienda a menor precio. Dentro del período de garantía de mejor precio, solicito el ajuste.',
+    status: 'Nuevo',
+    createdAt: new Date('2025-10-22T08:00:00'),
+    updatedAt: new Date('2025-10-22T08:00:00'),
+    notes: notes.filter(n => n.claimId === 'claim-7')
+  },
+  {
+    id: 'claim-8',
+    subject: 'Garantía no aplicada correctamente',
+    customerName: 'Patricia Ruiz',
+    contactInfo: '+54 11 6789-0123',
+    description: 'El producto falló dentro del período de garantía pero me están cobrando por la reparación. Tengo todos los comprobantes de compra y la garantía vigente.',
+    status: 'Esperando Respuesta',
+    createdAt: new Date('2025-10-16T09:30:00'),
+    updatedAt: new Date('2025-10-18T15:00:00'),
+    notes: []
+  },
+  {
+    id: 'claim-9',
+    subject: 'Paquete perdido en tránsito',
+    customerName: 'Fernando Castro',
+    contactInfo: 'fernando.castro@email.com',
+    description: 'El tracking muestra que mi paquete fue entregado hace 2 días, pero nunca lo recibí. He verificado con vecinos y portería sin resultado.',
+    status: 'En Proceso',
+    createdAt: new Date('2025-10-19T10:15:00'),
+    updatedAt: new Date('2025-10-21T09:00:00'),
+    notes: []
+  },
+  {
+    id: 'claim-10',
+    subject: 'Problema con cupón de descuento',
+    customerName: 'Sofía Morales',
+    contactInfo: 'sofia.morales@email.com',
+    description: 'Tengo un cupón de descuento del 20% (código: DESC20) que no se está aplicando en el checkout. El cupón es válido hasta fin de mes.',
+    status: 'Resuelto',
+    createdAt: new Date('2025-10-15T11:20:00'),
+    updatedAt: new Date('2025-10-16T14:30:00'),
+    notes: []
+  },
+  {
+    id: 'claim-11',
+    subject: 'Factura incorrecta',
+    customerName: 'Miguel Ángel Torres',
+    contactInfo: '+54 11 7890-1234',
+    description: 'La factura que recibí tiene errores en los datos fiscales de mi empresa. Necesito una factura corregida con los datos correctos para presentar a contabilidad.',
+    status: 'Nuevo',
+    createdAt: new Date('2025-10-22T09:45:00'),
+    updatedAt: new Date('2025-10-22T09:45:00'),
+    notes: []
+  },
+  {
+    id: 'claim-12',
+    subject: 'Producto dañado en transporte',
+    customerName: 'Gabriela Sánchez',
+    contactInfo: 'gabriela.sanchez@email.com',
+    description: 'El producto llegó con el empaque visiblemente dañado y el artículo interior presenta abolladuras. Solicito reemplazo o reembolso completo.',
+    status: 'Esperando Respuesta',
+    createdAt: new Date('2025-10-17T15:30:00'),
+    updatedAt: new Date('2025-10-19T11:00:00'),
+    notes: []
+  },
+  {
+    id: 'claim-13',
+    subject: 'Cancelación de pedido no procesada',
+    customerName: 'Ricardo Blanco',
+    contactInfo: 'ricardo.blanco@empresa.com',
+    description: 'Solicité la cancelación del pedido #7834 dentro de las 2 horas posteriores a la compra, pero el producto fue enviado de todas formas.',
+    status: 'En Proceso',
+    createdAt: new Date('2025-10-20T13:00:00'),
+    updatedAt: new Date('2025-10-21T10:15:00'),
+    notes: []
+  },
+  {
+    id: 'claim-14',
+    subject: 'Falta un artículo en el pedido',
+    customerName: 'Valentina Rojas',
+    contactInfo: '+54 11 8901-2345',
+    description: 'Mi pedido incluía 3 artículos pero solo recibí 2. Falta el producto SKU: ACC-456. La factura muestra los 3 items cobrados correctamente.',
+    status: 'Nuevo',
+    createdAt: new Date('2025-10-22T12:15:00'),
+    updatedAt: new Date('2025-10-22T12:15:00'),
+    notes: []
+  },
+  {
+    id: 'claim-15',
+    subject: 'Promoción no aplicada',
+    customerName: 'Andrés Vega',
+    contactInfo: 'andres.vega@email.com',
+    description: 'Durante la compra había una promoción 3x2 en ciertos productos que compré, pero se me cobraron los 3 artículos al precio completo.',
+    status: 'Resuelto',
+    createdAt: new Date('2025-10-14T10:00:00'),
+    updatedAt: new Date('2025-10-15T16:00:00'),
+    notes: []
+  },
+  {
+    id: 'claim-16',
+    subject: 'Problema con método de pago',
+    customerName: 'Carolina Méndez',
+    contactInfo: 'carolina.mendez@email.com',
+    description: 'Intenté realizar el pago con tarjeta de crédito pero el sistema lo rechazó. Mi banco confirma que no hay problemas con la tarjeta y tienen fondos disponibles.',
+    status: 'Esperando Respuesta',
+    createdAt: new Date('2025-10-21T14:30:00'),
+    updatedAt: new Date('2025-10-21T16:45:00'),
+    notes: []
+  },
+  {
+    id: 'claim-17',
+    subject: 'Cambio de dirección de entrega',
+    customerName: 'Jorge Herrera',
+    contactInfo: '+54 11 9012-3456',
+    description: 'Necesito cambiar la dirección de entrega del pedido #9123 ya que me mudé. El pedido aún no ha sido despachado según el tracking.',
+    status: 'En Proceso',
+    createdAt: new Date('2025-10-21T09:00:00'),
+    updatedAt: new Date('2025-10-21T15:30:00'),
+    notes: []
+  },
+  {
+    id: 'claim-18',
+    subject: 'Devolución no procesada',
+    customerName: 'Natalia Campos',
+    contactInfo: 'natalia.campos@empresa.com',
+    description: 'Envié un producto en devolución hace 10 días y aún no he recibido el reembolso. Tengo el comprobante de envío y el tracking muestra que llegó al depósito.',
+    status: 'Nuevo',
+    createdAt: new Date('2025-10-22T10:30:00'),
+    updatedAt: new Date('2025-10-22T10:30:00'),
+    notes: []
+  },
+  {
+    id: 'claim-19',
+    subject: 'Información de envío incorrecta',
+    customerName: 'Pablo Ramírez',
+    contactInfo: 'pablo.ramirez@email.com',
+    description: 'El número de tracking proporcionado no funciona en ningún sistema de seguimiento. Necesito información correcta sobre el estado de mi envío.',
+    status: 'En Proceso',
+    createdAt: new Date('2025-10-20T11:45:00'),
+    updatedAt: new Date('2025-10-21T13:00:00'),
+    notes: []
+  },
+  {
+    id: 'claim-20',
+    subject: 'Calidad del servicio de atención',
+    customerName: 'Isabel Navarro',
+    contactInfo: '+54 11 0123-4567',
+    description: 'He intentado comunicarme por los canales oficiales durante 3 días sin recibir respuesta. Necesito resolver urgentemente un problema con mi pedido #8765.',
+    status: 'Nuevo',
+    createdAt: new Date('2025-10-22T08:30:00'),
+    updatedAt: new Date('2025-10-22T08:30:00'),
+    notes: []
+  }
+];
