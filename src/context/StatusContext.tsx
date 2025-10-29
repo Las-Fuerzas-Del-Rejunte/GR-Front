@@ -6,6 +6,7 @@ interface StatusContextType {
   addStatus: (name: string, color: string) => void;
   deleteStatus: (statusId: string) => void;
   updateStatus: (statusId: string, name: string, color: string) => void;
+  reorderStatuses: (startIndex: number, endIndex: number) => void;
 }
 
 const StatusContext = createContext<StatusContextType | undefined>(undefined);
@@ -50,12 +51,27 @@ export const StatusProvider = ({ children }: { children: ReactNode }) => {
     saveStatuses(updated);
   };
 
+  const reorderStatuses = (startIndex: number, endIndex: number) => {
+    const result = Array.from(statuses);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
+    
+    // Actualizar el orden de cada estado
+    const reordered = result.map((status, index) => ({
+      ...status,
+      order: index + 1
+    }));
+    
+    saveStatuses(reordered);
+  };
+
   return (
     <StatusContext.Provider value={{
       statuses,
       addStatus,
       deleteStatus,
-      updateStatus
+      updateStatus,
+      reorderStatuses
     }}>
       {children}
     </StatusContext.Provider>

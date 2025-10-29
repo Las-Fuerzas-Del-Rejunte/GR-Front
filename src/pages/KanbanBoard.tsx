@@ -14,7 +14,7 @@ interface KanbanBoardProps {
 
 const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail }: KanbanBoardProps) => {
   const { claims, updateClaimStatus, searchClaims } = useClaims();
-  const { statuses } = useStatuses();
+  const { statuses, reorderStatuses } = useStatuses();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<ClaimStatus | 'all'>('all');
 
@@ -45,10 +45,17 @@ const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail }: KanbanBoardProps) =>
   }, [filteredClaims, statuses]);
 
   const handleDragEnd = (result: DropResult) => {
-    const { destination, draggableId } = result;
+    const { source, destination, draggableId, type } = result;
 
     if (!destination) return;
 
+    // Si estamos arrastrando una columna
+    if (type === 'column') {
+      reorderStatuses(source.index, destination.index);
+      return;
+    }
+
+    // Si estamos arrastrando una tarjeta
     const newStatus = destination.droppableId as ClaimStatus;
     updateClaimStatus(draggableId, newStatus);
   };
@@ -107,49 +114,71 @@ const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail }: KanbanBoardProps) =>
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className={`grid gap-6 ${statuses.length <= 4 ? `grid-cols-1 md:grid-cols-2 lg:grid-cols-${statuses.length}` : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
-          {statuses.map(status => (
-            <div key={status.id} className="flex flex-col">
-              <div className={`rounded-t-lg border-t-4 ${getColumnColors(status.color)} px-4 py-3`}>
-                <div className="flex items-center justify-between">
-                  <h2 className="font-semibold text-gray-900">{status.name}</h2>
-                  <span className="text-sm font-medium text-gray-600 bg-white px-2 py-0.5 rounded-full">
-                    {claimsByStatus[status.name]?.length || 0}
-                  </span>
-                </div>
-              </div>
-
-              <Droppable droppableId={status.name}>
-                {(provided, snapshot) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className={`flex-1 bg-gray-100 rounded-b-lg p-4 space-y-3 min-h-[500px] transition-colors ${snapshot.isDraggingOver ? 'bg-gray-200' : ''
-                      }`}
-                  >
-                    {(claimsByStatus[status.name] || []).map((claim, index) => (
-                      <Draggable key={claim.id} draggableId={claim.id} index={index}>
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            className={snapshot.isDragging ? 'opacity-50' : ''}
-                          >
-                            <KanbanCard
-                              claim={claim}
-                              onClick={() => onOpenClaimDetail(claim.id)}
-                            />
+        <div className="overflow-x-auto pb-4">
+          <Droppable droppableId="all-columns" direction="horizontal" type="column">
+            {(provided) => (
+              <div 
+                className="flex gap-6 min-w-min"
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+              >
+                {statuses.map((status, index) => (
+                  <Draggable key={status.id} draggableId={status.id} index={index}>
+                    {(provided, snapshot) => (
+                      <div 
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        className={`flex flex-col w-80 flex-shrink-0 ${snapshot.isDragging ? 'opacity-70 rotate-2' : ''}`}
+                      >
+                        <div 
+                          {...provided.dragHandleProps}
+                          className={`rounded-t-lg border-t-4 ${getColumnColors(status.color)} px-4 py-3 cursor-move`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <h2 className="font-semibold text-gray-900">{status.name}</h2>
+                            <span className="text-sm font-medium text-gray-600 bg-white px-2 py-0.5 rounded-full">
+                              {claimsByStatus[status.name]?.length || 0}
+                            </span>
                           </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </div>
-          ))}
+                        </div>
+
+                        <Droppable droppableId={status.name} type="card">
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.droppableProps}
+                              className={`flex-1 bg-gray-100 rounded-b-lg p-4 space-y-3 min-h-[500px] transition-colors ${snapshot.isDraggingOver ? 'bg-gray-200' : ''
+                                }`}
+                            >
+                              {(claimsByStatus[status.name] || []).map((claim, index) => (
+                                <Draggable key={claim.id} draggableId={claim.id} index={index}>
+                                  {(provided, snapshot) => (
+                                    <div
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      {...provided.dragHandleProps}
+                                      className={snapshot.isDragging ? 'opacity-50' : ''}
+                                    >
+                                      <KanbanCard
+                                        claim={claim}
+                                        onClick={() => onOpenClaimDetail(claim.id)}
+                                      />
+                                    </div>
+                                  )}
+                                </Draggable>
+                              ))}
+                              {provided.placeholder}
+                            </div>
+                          )}
+                        </Droppable>
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
         </div>
       </DragDropContext>
     </div>
