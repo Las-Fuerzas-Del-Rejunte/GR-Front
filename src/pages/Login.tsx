@@ -1,9 +1,11 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import Input from '../components/ui/Input';
+// import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
-import { FileText, Lock, Mail } from 'lucide-react';
+import logo from '../assets/logo.png';
+
+import { Lock, Mail } from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -34,8 +36,8 @@ const Login = () => {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center mb-4">
-              <FileText className="w-10 h-10 text-white" />
+            <div className="w-32 h-32 rounded-xl flex items-center justify-center mb-4">
+              <img src={logo} alt="Logo" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Sistema de Reclamos</h1>
             <p className="text-sm text-gray-500 mt-1">Inicia sesión para continuar</p>

@@ -3,7 +3,7 @@ import { useStatuses } from '../context/StatusContext';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
-import { Plus, Trash2, Edit2, Check, X } from 'lucide-react';
+import { Trash2, Edit2, Check, X } from 'lucide-react';
 
 const Settings = () => {
   const { statuses, addStatus, deleteStatus, updateStatus } = useStatuses();
@@ -71,7 +71,6 @@ const Settings = () => {
           <h2 className="text-lg font-semibold text-gray-900">Estados de Reclamos</h2>
           {!isAddingStatus && (
             <Button onClick={() => setIsAddingStatus(true)} size="sm">
-              <Plus className="w-4 h-4 mr-1" />
               Agregar Estado
             </Button>
           )}
@@ -93,11 +92,10 @@ const Settings = () => {
                     <button
                       key={color.value}
                       onClick={() => setNewStatusColor(color.value)}
-                      className={`flex items-center space-x-2 px-3 py-2 rounded-lg border-2 transition-all ${
-                        newStatusColor === color.value
+                      className={`flex items-center space-x-2 px-3 py-2 rounded-lg border-2 transition-all ${newStatusColor === color.value
                           ? 'border-blue-500 bg-blue-50'
                           : 'border-gray-200 hover:border-gray-300'
-                      }`}
+                        }`}
                     >
                       <div className={`w-4 h-4 rounded ${color.bg}`} />
                       <span className="text-sm">{color.label}</span>
@@ -140,11 +138,10 @@ const Settings = () => {
                         <button
                           key={color.value}
                           onClick={() => setEditColor(color.value)}
-                          className={`flex items-center space-x-2 px-3 py-2 rounded-lg border-2 transition-all ${
-                            editColor === color.value
+                          className={`flex items-center space-x-2 px-3 py-2 rounded-lg border-2 transition-all ${editColor === color.value
                               ? 'border-blue-500 bg-blue-50'
                               : 'border-gray-200 hover:border-gray-300'
-                          }`}
+                            }`}
                         >
                           <div className={`w-4 h-4 rounded ${color.bg}`} />
                           <span className="text-sm">{color.label}</span>

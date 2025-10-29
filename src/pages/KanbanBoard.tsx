@@ -5,7 +5,7 @@ import { useStatuses } from '../context/StatusContext';
 import { ClaimStatus } from '../types/claim';
 import KanbanCard from '../components/KanbanCard';
 import Button from '../components/ui/Button';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Search, Filter } from 'lucide-react';
 
 interface KanbanBoardProps {
   onOpenNewClaim: () => void;
@@ -76,8 +76,7 @@ const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail }: KanbanBoardProps) =>
           <p className="text-sm text-gray-600 mt-1">Tablero Kanban interactivo</p>
         </div>
         <Button onClick={onOpenNewClaim} size="lg">
-          <Plus className="w-5 h-5 mr-2" />
-          Registrar Nuevo Reclamo
+          Nuevo reclamo
         </Button>
       </div>
 
@@ -125,9 +124,8 @@ const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail }: KanbanBoardProps) =>
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`flex-1 bg-gray-100 rounded-b-lg p-4 space-y-3 min-h-[500px] transition-colors ${
-                      snapshot.isDraggingOver ? 'bg-gray-200' : ''
-                    }`}
+                    className={`flex-1 bg-gray-100 rounded-b-lg p-4 space-y-3 min-h-[500px] transition-colors ${snapshot.isDraggingOver ? 'bg-gray-200' : ''
+                      }`}
                   >
                     {(claimsByStatus[status.name] || []).map((claim, index) => (
                       <Draggable key={claim.id} draggableId={claim.id} index={index}>
