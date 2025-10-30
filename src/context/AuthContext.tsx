@@ -6,6 +6,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   recoverPassword: (email: string) => Promise<{ success: boolean; message: string }>;
+  updateUser: (userData: Partial<User>) => void;
   isAuthenticated: boolean;
 }
 
@@ -17,14 +18,20 @@ const mockUsers: Array<User & { password: string }> = [
     email: 'admin@sistema.com',
     password: 'admin123',
     name: 'Administrador Sistema',
-    role: 'admin'
+    role: 'admin',
+    phone: '+1 (555) 123-4567',
+    department: 'Administración',
+    position: 'Administrador del Sistema'
   },
   {
     id: '2',
     email: 'agente@sistema.com',
     password: 'agente123',
     name: 'Agente de Servicio',
-    role: 'agent'
+    role: 'agent',
+    phone: '+1 (555) 987-6543',
+    department: 'Atención al Cliente',
+    position: 'Agente de Soporte'
   }
 ];
 
@@ -82,12 +89,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const updateUser = (userData: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...userData };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
       login,
       logout,
       recoverPassword,
+      updateUser,
       isAuthenticated: user !== null
     }}>
       {children}

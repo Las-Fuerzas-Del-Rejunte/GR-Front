@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Kanban, FileText, Settings, LogOut, ChevronDown, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Kanban, FileText, Settings, LogOut, ChevronDown, Menu, X, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Layout = () => {
@@ -111,6 +111,18 @@ const Layout = () => {
                 {showUserMenu && (
                   <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-neutral-200 py-1.5 overflow-hidden z-50">
                     <NavLink
+                      to="/perfil"
+                      onClick={() => setShowUserMenu(false)}
+                      className={({ isActive }) =>
+                        `w-full flex items-center space-x-2 px-4 py-2.5 text-sm ${
+                          isActive ? 'text-neutral-900 bg-neutral-100' : 'text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900'
+                        } transition-colors`
+                      }
+                    >
+                      <User className="w-4 h-4" />
+                      <span>Mi Perfil</span>
+                    </NavLink>
+                    <NavLink
                       to="/configuracion"
                       onClick={() => setShowUserMenu(false)}
                       className={({ isActive }) =>
@@ -122,6 +134,7 @@ const Layout = () => {
                       <Settings className="w-4 h-4" />
                       <span>Configuración</span>
                     </NavLink>
+                    <div className="border-t border-neutral-200 my-1" />
                     <button
                       onClick={handleLogout}
                       className="w-full flex items-center space-x-2 px-4 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 transition-colors"
@@ -184,6 +197,20 @@ const Layout = () => {
               {showMobileUserMenu && (
                 <div className="pl-12 pr-3 space-y-1">
                   <NavLink
+                    to="/perfil"
+                    onClick={() => { setShowMobileUserMenu(false); setShowMobileMenu(false); }}
+                    className={({ isActive }) =>
+                      `flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium ${
+                        isActive
+                          ? 'bg-neutral-100 text-neutral-900 border border-neutral-200 shadow-sm'
+                          : 'text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900'
+                      }`
+                    }
+                  >
+                    <User className="w-4 h-4" />
+                    <span>Mi Perfil</span>
+                  </NavLink>
+                  <NavLink
                     to="/configuracion"
                     onClick={() => { setShowMobileUserMenu(false); setShowMobileMenu(false); }}
                     className={({ isActive }) =>
@@ -197,6 +224,7 @@ const Layout = () => {
                     <Settings className="w-4 h-4" />
                     <span>Configuración</span>
                   </NavLink>
+                  <div className="border-t border-neutral-200 my-1" />
                   <button
                     onClick={() => { setShowMobileUserMenu(false); setShowMobileMenu(false); handleLogout(); }}
                     className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900"

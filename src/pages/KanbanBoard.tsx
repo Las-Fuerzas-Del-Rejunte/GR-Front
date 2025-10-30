@@ -239,7 +239,7 @@ const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail }: KanbanBoardProps) =>
                             <div
                               ref={provided.innerRef}
                               {...provided.droppableProps}
-                              className={`flex-1 bg-gray-100 rounded-b-lg p-4 space-y-3 min-h-[500px] transition-colors ${snapshot.isDraggingOver ? 'bg-gray-200' : ''
+                              className={`flex-1 bg-gradient-to-b from-white via-neutral-50/30 to-white rounded-b-lg p-4 space-y-3 min-h-[500px] transition-colors ${snapshot.isDraggingOver ? 'bg-gradient-to-b from-blue-50/50 via-neutral-100/50 to-blue-50/50' : ''
                                 }`}
                             >
                               {(claimsByStatus[status.name] || []).map((claim, index) => (

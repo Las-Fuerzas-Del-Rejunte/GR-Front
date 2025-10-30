@@ -3,7 +3,7 @@ import { useClaims } from '../context/ClaimsContext';
 import { useStatuses } from '../context/StatusContext';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
-import { TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { TrendingUp, AlertCircle, CheckCircle2, Info } from 'lucide-react';
 
 const Dashboard = () => {
   const { claims } = useClaims();
@@ -124,9 +124,12 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <h2 className="text-lg font-bold text-neutral-900 mb-6">Distribución por Estado</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <Card className="p-6 lg:col-span-9">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-neutral-900">Distribución por Estado</h2>
+            <InfoTip title="Cantidad de reclamos por estado actual, relativo al máximo del periodo." />
+          </div>
           <div className="space-y-4">
             {statusDistribution.map(({ status, count, color }) => {
               const percentage = (count / maxCount) * 100;
@@ -149,17 +152,20 @@ const Dashboard = () => {
           </div>
         </Card>
 
-        <Card className="p-6">
-          <h2 className="text-lg font-bold text-neutral-900 mb-6">Actualizaciones Recientes</h2>
+        <Card className="p-6 lg:col-span-3">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-neutral-900">Actualizaciones Recientes</h2>
+            <InfoTip title="Últimos reclamos actualizados, ordenados por fecha de modificación." />
+          </div>
           <div className="space-y-3">
             {recentClaims.map(claim => (
               <div
                 key={claim.id}
-                className="flex items-center justify-between p-4 bg-neutral-50 rounded-xl hover:bg-neutral-100 transition-colors border border-neutral-200"
+                className="flex items-center justify-between p-4 bg-gradient-to-br from-white via-neutral-50/50 to-white rounded-xl hover:from-blue-50/30 hover:via-neutral-50/70 hover:to-blue-50/30 transition-colors border border-neutral-200 shadow-sm hover:shadow-md"
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2 mb-1.5">
-                    <span className="text-xs font-mono text-neutral-500 bg-neutral-200 px-2 py-0.5 rounded">{claim.id}</span>
+                    <span className="text-xs font-mono text-neutral-500 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 px-2 py-0.5 rounded">{claim.id}</span>
                     <Badge status={claim.status} />
                   </div>
                   <p className="text-sm font-medium text-neutral-900 truncate">{claim.customerName}</p>
@@ -170,8 +176,125 @@ const Dashboard = () => {
           </div>
         </Card>
       </div>
+
+      {/* Nuevas métricas: SLA y Backlog por antigüedad */}
+      <SlaAndBacklog claims={claims} />
     </div>
   );
 };
 
 export default Dashboard;
+
+// --- Componentes auxiliares para SLA y Backlog ---
+
+function InfoTip({ title }: { title: string }) {
+  return (
+    <span className="relative inline-flex items-center group">
+      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-neutral-100 text-neutral-600 border border-neutral-200 group-hover:bg-neutral-200 transition-colors">
+        <Info className="w-3.5 h-3.5" />
+      </span>
+      <div className="pointer-events-none absolute right-0 top-full mt-2 w-64 p-3 rounded-lg border border-neutral-200 shadow-lg bg-white/90 backdrop-blur-md opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-150 z-10">
+        <p className="text-xs leading-relaxed text-neutral-700">{title}</p>
+      </div>
+    </span>
+  );
+}
+
+type TimeStats = { averageHours: number; p90Hours: number; slaPercent: number; within: number; total: number };
+
+function computeSlaAndTimes(claims: ReturnType<typeof useClaims>['claims']): TimeStats {
+  const SLA_HOURS = 72; // 3 días
+  const resolvedClaims = claims.filter(c => String(c.status).toLowerCase().includes('resuel'));
+  if (resolvedClaims.length === 0) {
+    return { averageHours: 0, p90Hours: 0, slaPercent: 0, within: 0, total: 0 };
+  }
+  const durationsHours = resolvedClaims.map(c => {
+    const start = new Date(c.createdAt).getTime();
+    const end = new Date(c.updatedAt).getTime();
+    return Math.max(0, (end - start) / (1000 * 60 * 60));
+  }).sort((a, b) => a - b);
+
+  const avg = durationsHours.reduce((s, x) => s + x, 0) / durationsHours.length;
+  const p90Index = Math.floor(0.9 * (durationsHours.length - 1));
+  const p90 = durationsHours[p90Index];
+  const within = durationsHours.filter(h => h <= SLA_HOURS).length;
+  const slaPercent = Math.round((within / durationsHours.length) * 100);
+  return { averageHours: avg, p90Hours: p90, slaPercent, within, total: durationsHours.length };
+}
+
+type AgeBuckets = { label: string; daysMax?: number; count: number }[];
+
+function computeBacklogAges(claims: ReturnType<typeof useClaims>['claims'], resolvedName?: string): AgeBuckets {
+  const resolvedKey = resolvedName || 'resuel';
+  const open = claims.filter(c => !String(c.status).toLowerCase().includes(resolvedKey));
+  const now = Date.now();
+  const buckets: AgeBuckets = [
+    { label: '0-2 días', daysMax: 2, count: 0 },
+    { label: '3-7 días', daysMax: 7, count: 0 },
+    { label: '8-14 días', daysMax: 14, count: 0 },
+    { label: '>14 días', count: 0 }
+  ];
+  open.forEach(c => {
+    const days = Math.floor((now - new Date(c.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+    if (days <= 2) buckets[0].count++;
+    else if (days <= 7) buckets[1].count++;
+    else if (days <= 14) buckets[2].count++;
+    else buckets[3].count++;
+  });
+  return buckets;
+}
+
+function SlaAndBacklog({ claims }: { claims: ReturnType<typeof useClaims>['claims'] }) {
+  const { statuses } = useStatuses();
+  const resolved = statuses.find(s => s.name.toLowerCase().includes('resuel'))?.name;
+  const sla = computeSlaAndTimes(claims);
+  const ages = computeBacklogAges(claims, resolved);
+  const totalOpen = ages.reduce((s, b) => s + b.count, 0) || 1;
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* SLA */}
+      <Card className="p-6 lg:col-span-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-neutral-900">Cumplimiento de SLA</h2>
+          <InfoTip title="Porcentaje de casos resueltos dentro del SLA y tiempos (promedio y P90)." />
+        </div>
+        <div className="space-y-3">
+          <div className="w-full h-4 bg-neutral-100 rounded-full overflow-hidden">
+            <div className="h-4 bg-emerald-500" style={{ width: `${sla.slaPercent}%` }} />
+          </div>
+          <div className="flex items-center gap-2 text-sm text-neutral-700">
+            <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">{sla.slaPercent}% cumple</span>
+            <span className="px-2 py-0.5 rounded-full bg-neutral-50 text-neutral-700 border border-neutral-200">{sla.within}/{sla.total} en SLA</span>
+            <span className="px-2 py-0.5 rounded-full bg-neutral-50 text-neutral-700 border border-neutral-200">Promedio {sla.averageHours.toFixed(1)} h</span>
+            <span className="px-2 py-0.5 rounded-full bg-neutral-50 text-neutral-700 border border-neutral-200">P90 {sla.p90Hours.toFixed(1)} h</span>
+          </div>
+        </div>
+      </Card>
+
+      {/* Backlog por antigüedad */}
+      <Card className="p-6 lg:col-span-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-neutral-900">Backlog por Antigüedad</h2>
+          <InfoTip title="Reclamos abiertos agrupados por días desde su creación." />
+        </div>
+        <div className="space-y-4">
+          {ages.map(b => {
+            const pct = Math.round((b.count / totalOpen) * 100);
+            return (
+              <div key={b.label}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium text-neutral-700">{b.label}</span>
+                  <span className="text-xs text-neutral-500">{b.count} ({pct}%)</span>
+                </div>
+                <div className="w-full bg-neutral-100 rounded-full h-3 overflow-hidden">
+                  <div className="h-3 bg-neutral-400 rounded-full" style={{ width: `${pct}%` }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+    </div>
+  );
+}

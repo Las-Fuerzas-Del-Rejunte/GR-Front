@@ -1,12 +1,13 @@
-import { TextareaHTMLAttributes, forwardRef } from 'react';
+import { TextareaHTMLAttributes, forwardRef, ReactNode } from 'react';
 
 interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   error?: string;
+  icon?: ReactNode;
 }
 
 const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
-  ({ label, error, className = '', ...props }, ref) => {
+  ({ label, error, className = '', icon, ...props }, ref) => {
     return (
       <div className="w-full">
         {label && (
@@ -14,13 +15,22 @@ const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
             {label}
           </label>
         )}
-        <textarea
-          ref={ref}
-          className={`w-full px-4 py-2 border rounded-lg text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${
-            error ? 'border-red-300' : 'border-gray-300'
-          } ${className}`}
-          {...props}
-        />
+        <div className="relative">
+          {icon && (
+            <div className="absolute left-3 top-3 text-gray-400">
+              {icon}
+            </div>
+          )}
+          <textarea
+            ref={ref}
+            className={`w-full py-2 border rounded-lg text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white ${
+              icon ? 'pl-10 pr-4' : 'px-4'
+            } ${
+              error ? 'border-red-300' : 'border-neutral-200'
+            } ${className}`}
+            {...props}
+          />
+        </div>
         {error && (
           <p className="mt-1.5 text-sm text-red-600">{error}</p>
         )}

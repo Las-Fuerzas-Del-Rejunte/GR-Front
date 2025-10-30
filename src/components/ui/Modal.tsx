@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -9,11 +9,14 @@ interface ModalProps {
 }
 
 const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
+  const [animateIn, setAnimateIn] = useState(false);
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      requestAnimationFrame(() => setAnimateIn(true));
     } else {
       document.body.style.overflow = 'unset';
+      setAnimateIn(false);
     }
 
     return () => {
@@ -27,11 +30,11 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
     <div className="fixed inset-0 z-50">
       <div className="flex min-h-screen items-center justify-center p-4">
         <div
-          className="fixed inset-0 bg-neutral-900/40 backdrop-blur-sm transition-opacity"
+          className={`fixed inset-0 bg-neutral-100/40 backdrop-blur-sm transition-opacity duration-200 ${animateIn ? 'opacity-100' : 'opacity-0'}`}
           onClick={onClose}
         />
 
-        <div className="relative glass-panel max-w-2xl w-full max-h-[90vh] flex flex-col">
+        <div className={`relative glass-panel max-w-2xl w-full max-h-[90vh] flex flex-col transform transition-all duration-200 ease-out ${animateIn ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95'}`}>
           <div className="sticky top-0 glass-header px-6 py-4 flex items-center justify-between rounded-t-xl z-10">
             <h2 className="text-xl font-bold text-gray-900">{title}</h2>
             <button
