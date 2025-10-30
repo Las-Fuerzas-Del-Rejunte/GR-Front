@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useClaims } from '../context/ClaimsContext';
 import { useStatuses } from '../context/StatusContext';
@@ -22,24 +22,6 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
   const [newNote, setNewNote] = useState('');
   const [showAssignMenu, setShowAssignMenu] = useState(false);
   const [showPriorityMenu, setShowPriorityMenu] = useState(false);
-  
-  const assignMenuRef = useRef<HTMLDivElement>(null);
-  const priorityMenuRef = useRef<HTMLDivElement>(null);
-
-  // Cerrar menús al hacer clic fuera
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (assignMenuRef.current && !assignMenuRef.current.contains(event.target as Node)) {
-        setShowAssignMenu(false);
-      }
-      if (priorityMenuRef.current && !priorityMenuRef.current.contains(event.target as Node)) {
-        setShowPriorityMenu(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   if (!claim) {
     return (
@@ -145,7 +127,7 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
             {/* Persona asignada */}
             <div>
               <label className="text-xs font-semibold text-gray-700 mb-2 block">Asignado a</label>
-              <div className="relative" ref={assignMenuRef}>
+              <div>
                 <button
                   onClick={() => {
                     setShowAssignMenu(!showAssignMenu);
@@ -235,7 +217,7 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
             {/* Prioridad */}
             <div>
               <label className="text-xs font-semibold text-gray-700 mb-2 block">Prioridad</label>
-              <div className="relative" ref={priorityMenuRef}>
+              <div>
                 <button
                   onClick={() => {
                     setShowPriorityMenu(!showPriorityMenu);
