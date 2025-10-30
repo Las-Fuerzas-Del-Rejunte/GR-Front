@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useClaims } from '../context/ClaimsContext';
 import { useStatuses } from '../context/StatusContext';
 import { useUsers } from '../context/UsersContext';
@@ -7,7 +8,7 @@ import Badge from './ui/Badge';
 import Button from './ui/Button';
 import TextArea from './ui/TextArea';
 import Card from './ui/Card';
-import { User, Mail, Calendar, Clock, MessageSquare, ChevronDown, AlertTriangle } from 'lucide-react';
+import { User, Mail, Calendar, Clock, MessageSquare, ChevronDown } from 'lucide-react';
 
 interface ClaimDetailViewProps {
   claimId: string;
@@ -86,7 +87,7 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Información del Cliente</h3>
           <div className="space-y-3">
@@ -138,9 +139,9 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
         </Card>
 
         {/* Card para asignación y prioridad */}
-        <Card className="p-6">
+        <Card className="p-6 md:col-span-2 lg:col-span-1">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Asignación y Prioridad</h3>
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
             {/* Persona asignada */}
             <div>
               <label className="text-xs font-semibold text-gray-700 mb-2 block">Asignado a</label>
@@ -150,16 +151,16 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
                     setShowAssignMenu(!showAssignMenu);
                     setShowPriorityMenu(false);
                   }}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-200 text-left flex items-center justify-between group"
+                  className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-200 text-left flex items-center justify-between group"
                 >
                   {claim.assignedTo ? (
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
                         <span className="text-xs font-bold text-white">
                           {claim.assignedTo.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
                         </span>
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-gray-900 truncate">{claim.assignedTo.name}</p>
                         {claim.assignedTo.position && (
                           <p className="text-xs text-gray-500 truncate">{claim.assignedTo.position}</p>
@@ -167,60 +168,66 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
                       </div>
                     </div>
                   ) : (
-                    <span className="text-sm font-medium text-gray-500">Seleccionar persona...</span>
+                    <span className="text-sm font-medium text-gray-500">Asignar...</span>
                   )}
-                  <ChevronDown className={`w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-all duration-200 ${showAssignMenu ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-all duration-200 flex-shrink-0 ml-2 ${showAssignMenu ? 'rotate-180' : ''}`} />
                 </button>
 
                 {/* Menú de selección de usuarios */}
-                {showAssignMenu && (
-                  <div className="absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-72 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="p-2">
-                      <button
-                        onClick={() => {
-                          assignClaim(claimId, null);
-                          setShowAssignMenu(false);
-                        }}
-                        className={`w-full px-3 py-2.5 rounded-md text-left hover:bg-gray-100 transition-colors flex items-center gap-3 ${!claim.assignedTo ? 'bg-blue-50 border-2 border-blue-200' : ''}`}
-                      >
-                        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                          <User className="w-4 h-4 text-gray-500" />
-                        </div>
-                        <span className="text-sm font-medium text-gray-700">Sin asignar</span>
-                      </button>
-                    </div>
-                    <div className="border-t border-gray-100 p-2 space-y-1">
-                      {users.map(user => (
+                {showAssignMenu && createPortal(
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm" onClick={() => setShowAssignMenu(false)}>
+                    <div className="bg-white rounded-lg shadow-2xl w-full max-w-md max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                      <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3">
+                        <h4 className="font-semibold text-gray-900">Asignar a</h4>
+                      </div>
+                      <div className="p-3">
                         <button
-                          key={user.id}
                           onClick={() => {
-                            assignClaim(claimId, user);
+                            assignClaim(claimId, null);
                             setShowAssignMenu(false);
                           }}
-                          className={`w-full px-3 py-2.5 rounded-md text-left hover:bg-gray-100 transition-colors flex items-center gap-3 ${claim.assignedTo?.id === user.id ? 'bg-blue-50 border-2 border-blue-200' : ''}`}
+                          className={`w-full px-4 py-3 rounded-lg text-left hover:bg-gray-100 transition-colors flex items-center gap-3 ${!claim.assignedTo ? 'bg-blue-50 ring-2 ring-blue-500' : ''}`}
                         >
-                          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
-                            <span className="text-xs font-bold text-white">
-                              {user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-                            </span>
+                          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+                            <User className="w-5 h-5 text-gray-500" />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
-                            {user.position && (
-                              <p className="text-xs text-gray-500 truncate">{user.position}</p>
-                            )}
-                          </div>
-                          {claim.assignedTo?.id === user.id && (
-                            <div className="flex-shrink-0 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
-                              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                              </svg>
-                            </div>
-                          )}
+                          <span className="text-base font-semibold text-gray-900">Sin asignar</span>
                         </button>
-                      ))}
+                      </div>
+                      <div className="border-t border-gray-100 p-3 space-y-2">
+                        {users.map(user => (
+                          <button
+                            key={user.id}
+                            onClick={() => {
+                              assignClaim(claimId, user);
+                              setShowAssignMenu(false);
+                            }}
+                            className={`w-full px-4 py-3 rounded-lg text-left hover:bg-gray-100 transition-colors flex items-center gap-3 ${claim.assignedTo?.id === user.id ? 'bg-blue-50 ring-2 ring-blue-500' : ''}`}
+                          >
+                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
+                              <span className="text-sm font-bold text-white">
+                                {user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                              </span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-base font-semibold text-gray-900">{user.name}</p>
+                              {user.position && (
+                                <p className="text-sm text-gray-600">{user.position}</p>
+                              )}
+                            </div>
+                            {claim.assignedTo?.id === user.id && (
+                              <div className="flex-shrink-0 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  </div>,
+                  document.body
                 )}
               </div>
             </div>
@@ -234,59 +241,75 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
                     setShowPriorityMenu(!showPriorityMenu);
                     setShowAssignMenu(false);
                   }}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-200 text-left flex items-center justify-between group"
+                  className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-200 text-left flex items-center justify-between group"
                 >
-                  <div className="flex items-center gap-3">
-                    {claim.priority === 'urgent' && <AlertTriangle className="w-5 h-5 text-red-600" />}
-                    {claim.priority === 'high' && <AlertTriangle className="w-5 h-5 text-orange-600" />}
-                    {claim.priority === 'medium' && <AlertTriangle className="w-5 h-5 text-yellow-600" />}
-                    {claim.priority === 'low' && <AlertTriangle className="w-5 h-5 text-green-600" />}
-                    {!claim.priority && <AlertTriangle className="w-5 h-5 text-gray-400" />}
-                    
-                    <span className={`text-sm font-semibold ${
-                      claim.priority === 'urgent' ? 'text-red-700' :
-                      claim.priority === 'high' ? 'text-orange-700' :
-                      claim.priority === 'medium' ? 'text-yellow-700' :
-                      claim.priority === 'low' ? 'text-green-700' : 'text-gray-500'
-                    }`}>
-                      {claim.priority === 'urgent' ? '🔴 Urgente' :
-                       claim.priority === 'high' ? '🟠 Alta' :
-                       claim.priority === 'medium' ? '🟡 Media' :
-                       claim.priority === 'low' ? '🟢 Baja' : 'Seleccionar prioridad...'}
-                    </span>
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-all duration-200 ${showPriorityMenu ? 'rotate-180' : ''}`} />
+                  {claim.priority ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl flex-shrink-0">
+                        {claim.priority === 'urgent' ? '🔴' :
+                         claim.priority === 'high' ? '🟠' :
+                         claim.priority === 'medium' ? '🟡' :
+                         claim.priority === 'low' ? '🟢' : ''}
+                      </span>
+                      <span className={`text-sm font-semibold ${
+                        claim.priority === 'urgent' ? 'text-red-700' :
+                        claim.priority === 'high' ? 'text-orange-700' :
+                        claim.priority === 'medium' ? 'text-yellow-700' :
+                        claim.priority === 'low' ? 'text-green-700' : 'text-gray-500'
+                      }`}>
+                        {claim.priority === 'urgent' ? 'Urgente' :
+                         claim.priority === 'high' ? 'Alta' :
+                         claim.priority === 'medium' ? 'Media' :
+                         claim.priority === 'low' ? 'Baja' : ''}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-sm font-medium text-gray-500">Prioridad...</span>
+                  )}
+                  <ChevronDown className={`w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-all duration-200 flex-shrink-0 ml-2 ${showPriorityMenu ? 'rotate-180' : ''}`} />
                 </button>
 
                 {/* Menú de prioridad */}
-                {showPriorityMenu && (
-                  <div className="absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                    {[
-                      { value: 'urgent', label: 'Urgente', color: 'text-red-700', bgHover: 'hover:bg-red-50', icon: '🔴', borderColor: 'border-red-200' },
-                      { value: 'high', label: 'Alta', color: 'text-orange-700', bgHover: 'hover:bg-orange-50', icon: '🟠', borderColor: 'border-orange-200' },
-                      { value: 'medium', label: 'Media', color: 'text-yellow-700', bgHover: 'hover:bg-yellow-50', icon: '🟡', borderColor: 'border-yellow-200' },
-                      { value: 'low', label: 'Baja', color: 'text-green-700', bgHover: 'hover:bg-green-50', icon: '🟢', borderColor: 'border-green-200' }
-                    ].map(priority => (
-                      <button
-                        key={priority.value}
-                        onClick={() => {
-                          updateClaimPriority(claimId, priority.value as any);
-                          setShowPriorityMenu(false);
-                        }}
-                        className={`w-full px-4 py-3 text-left ${priority.bgHover} transition-colors flex items-center gap-3 ${claim.priority === priority.value ? `bg-${priority.value === 'urgent' ? 'red' : priority.value === 'high' ? 'orange' : priority.value === 'medium' ? 'yellow' : 'green'}-50 border-l-4 ${priority.borderColor}` : 'border-l-4 border-transparent'}`}
-                      >
-                        <span className="text-lg">{priority.icon}</span>
-                        <span className={`text-sm font-semibold ${priority.color}`}>{priority.label}</span>
-                        {claim.priority === priority.value && (
-                          <div className="ml-auto flex-shrink-0 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
-                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                          </div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
+                {showPriorityMenu && createPortal(
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm" onClick={() => setShowPriorityMenu(false)}>
+                    <div className="bg-white rounded-lg shadow-2xl w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+                      <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3">
+                        <h4 className="font-semibold text-gray-900">Seleccionar prioridad</h4>
+                      </div>
+                      <div className="p-3 space-y-2">
+                        {[
+                          { value: 'urgent', label: 'Urgente', emoji: '🔴', color: 'text-red-700', bgColor: 'bg-red-50', ringColor: 'ring-red-500' },
+                          { value: 'high', label: 'Alta', emoji: '🟠', color: 'text-orange-700', bgColor: 'bg-orange-50', ringColor: 'ring-orange-500' },
+                          { value: 'medium', label: 'Media', emoji: '🟡', color: 'text-yellow-700', bgColor: 'bg-yellow-50', ringColor: 'ring-yellow-500' },
+                          { value: 'low', label: 'Baja', emoji: '🟢', color: 'text-green-700', bgColor: 'bg-green-50', ringColor: 'ring-green-500' }
+                        ].map(priority => (
+                          <button
+                            key={priority.value}
+                            onClick={() => {
+                              updateClaimPriority(claimId, priority.value as any);
+                              setShowPriorityMenu(false);
+                            }}
+                            className={`w-full px-4 py-3 rounded-lg text-left flex items-center gap-3 transition-colors ${
+                              claim.priority === priority.value 
+                                ? `${priority.bgColor} ring-2 ${priority.ringColor}` 
+                                : 'hover:bg-gray-50'
+                            }`}
+                          >
+                            <span className="text-2xl flex-shrink-0">{priority.emoji}</span>
+                            <span className={`text-base font-semibold flex-1 ${priority.color}`}>{priority.label}</span>
+                            {claim.priority === priority.value && (
+                              <div className="flex-shrink-0 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>,
+                  document.body
                 )}
               </div>
             </div>
