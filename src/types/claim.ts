@@ -14,6 +14,8 @@ export interface Claim {
   contactInfo: string;
   description: string;
   status: ClaimStatus;
+  assignedTo?: User | null;
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
   createdAt: Date;
   updatedAt: Date;
   notes: ClaimNote[];

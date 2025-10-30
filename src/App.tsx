@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { StatusProvider } from './context/StatusContext';
 import { ClaimsProvider } from './context/ClaimsContext';
+import { UsersProvider } from './context/UsersContext';
 import { ToastProvider } from './context/ToastContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
@@ -17,8 +18,9 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <StatusProvider>
-          <ClaimsProvider>
-            <ToastProvider>
+          <UsersProvider>
+            <ClaimsProvider>
+              <ToastProvider>
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/recuperar-password" element={<PasswordRecovery />} />
@@ -36,6 +38,7 @@ function App() {
               </Routes>
             </ToastProvider>
           </ClaimsProvider>
+          </UsersProvider>
         </StatusProvider>
       </AuthProvider>
     </BrowserRouter>

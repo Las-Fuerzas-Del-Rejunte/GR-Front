@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { Claim, ClaimNote, ClaimStatus } from '../types/claim';
+import { Claim, ClaimNote, ClaimStatus, User } from '../types/claim';
 import { mockClaims } from '../data/mockData';
 
 interface ClaimsContextType {
@@ -8,6 +8,8 @@ interface ClaimsContextType {
   updateClaimStatus: (claimId: string, newStatus: ClaimStatus) => void;
   addClaimNote: (claimId: string, content: string, author: string) => void;
   deleteClaim: (claimId: string) => void;
+  assignClaim: (claimId: string, user: User | null) => void;
+  updateClaimPriority: (claimId: string, priority: 'low' | 'medium' | 'high' | 'urgent') => void;
   getClaimById: (claimId: string) => Claim | undefined;
   searchClaims: (query: string) => Claim[];
 }
@@ -60,6 +62,22 @@ export const ClaimsProvider = ({ children }: { children: ReactNode }) => {
     setClaims(prev => prev.filter(claim => claim.id !== claimId));
   };
 
+  const assignClaim = (claimId: string, user: User | null) => {
+    setClaims(prev => prev.map(claim =>
+      claim.id === claimId
+        ? { ...claim, assignedTo: user, updatedAt: new Date() }
+        : claim
+    ));
+  };
+
+  const updateClaimPriority = (claimId: string, priority: 'low' | 'medium' | 'high' | 'urgent') => {
+    setClaims(prev => prev.map(claim =>
+      claim.id === claimId
+        ? { ...claim, priority, updatedAt: new Date() }
+        : claim
+    ));
+  };
+
   const getClaimById = (claimId: string) => {
     return claims.find(claim => claim.id === claimId);
   };
@@ -83,6 +101,8 @@ export const ClaimsProvider = ({ children }: { children: ReactNode }) => {
       updateClaimStatus,
       addClaimNote,
       deleteClaim,
+      assignClaim,
+      updateClaimPriority,
       getClaimById,
       searchClaims
     }}>

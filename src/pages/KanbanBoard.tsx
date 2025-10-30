@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { DragDropContext, Droppable, Draggable, DropResult, DragUpdate } from '@hello-pangea/dnd';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { DragDropContext, Droppable, Draggable, DropResult, DragUpdate, DragStart } from '@hello-pangea/dnd';
 import { useClaims } from '../context/ClaimsContext';
 import { useStatuses } from '../context/StatusContext';
 import { ClaimStatus } from '../types/claim';
@@ -49,8 +49,8 @@ const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail, onCreateClaimWithStatu
     return grouped;
   }, [filteredClaims, statuses]);
 
-  const handleDragStart = (result: DropResult) => {
-    setDraggedClaimId(result.draggableId);
+  const handleDragStart = (start: DragStart) => {
+    setDraggedClaimId(start.draggableId);
   };
 
   const handleDragUpdate = (update: DragUpdate) => {
