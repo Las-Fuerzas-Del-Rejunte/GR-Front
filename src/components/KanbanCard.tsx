@@ -10,7 +10,7 @@ const KanbanCard = ({ claim, onClick }: KanbanCardProps) => {
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-lg border border-gray-200 p-4 cursor-pointer hover:shadow-md transition-shadow duration-200"
+      className="rounded-lg p-4 cursor-pointer glass glass-hover duration-200"
     >
       <div className="flex items-start justify-between mb-2">
         <span className="text-xs font-mono text-gray-500">{claim.id}</span>
