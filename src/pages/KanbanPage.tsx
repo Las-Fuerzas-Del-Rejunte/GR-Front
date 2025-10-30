@@ -7,11 +7,20 @@ import ClaimDetailView from '../components/ClaimDetailView';
 const KanbanPage = () => {
   const [isNewClaimOpen, setIsNewClaimOpen] = useState(false);
   const [selectedClaimId, setSelectedClaimId] = useState<string | null>(null);
+  const [initialStatus, setInitialStatus] = useState<string | null>(null);
 
-  const handleCloseNewClaim = () => setIsNewClaimOpen(false);
+  const handleCloseNewClaim = () => {
+    setIsNewClaimOpen(false);
+    setInitialStatus(null);
+  };
   const handleOpenNewClaim = () => setIsNewClaimOpen(true);
+  const handleCreateClaimWithStatus = (status: string) => {
+    setInitialStatus(status);
+    setIsNewClaimOpen(true);
+  };
   const handleClaimSuccess = () => {
     setIsNewClaimOpen(false);
+    setInitialStatus(null);
   };
 
   const handleOpenClaimDetail = (claimId: string) => {
@@ -27,6 +36,7 @@ const KanbanPage = () => {
       <KanbanBoard
         onOpenNewClaim={handleOpenNewClaim}
         onOpenClaimDetail={handleOpenClaimDetail}
+        onCreateClaimWithStatus={handleCreateClaimWithStatus}
       />
 
       <Modal
@@ -34,7 +44,11 @@ const KanbanPage = () => {
         onClose={handleCloseNewClaim}
         title="Registrar Nuevo Reclamo"
       >
-        <NewClaimForm onClose={handleCloseNewClaim} onSuccess={handleClaimSuccess} />
+        <NewClaimForm 
+          onClose={handleCloseNewClaim} 
+          onSuccess={handleClaimSuccess}
+          initialStatus={initialStatus || undefined}
+        />
       </Modal>
 
       <Modal

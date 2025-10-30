@@ -1,24 +1,27 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { DragDropContext, Droppable, Draggable, DropResult, DragUpdate } from '@hello-pangea/dnd';
 import { useClaims } from '../context/ClaimsContext';
 import { useStatuses } from '../context/StatusContext';
 import { ClaimStatus } from '../types/claim';
 import KanbanCard from '../components/KanbanCard';
 import Button from '../components/ui/Button';
-import { Search, Filter, ChevronDown } from 'lucide-react';
+import { Search, Filter, ChevronDown, Plus } from 'lucide-react';
 
 interface KanbanBoardProps {
   onOpenNewClaim: () => void;
   onOpenClaimDetail: (claimId: string) => void;
+  onCreateClaimWithStatus?: (status: string) => void;
 }
 
-const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail }: KanbanBoardProps) => {
+const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail, onCreateClaimWithStatus }: KanbanBoardProps) => {
   const { claims, updateClaimStatus, searchClaims } = useClaims();
   const { statuses, reorderStatuses } = useStatuses();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatuses, setSelectedStatuses] = useState<ClaimStatus[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement | null>(null);
+  const [draggedClaimId, setDraggedClaimId] = useState<string | null>(null);
+  const [dragDestination, setDragDestination] = useState<{ droppableId: string; index: number } | null>(null);
 
   const filteredClaims = useMemo(() => {
     let result = searchQuery ? searchClaims(searchQuery) : claims;
@@ -46,8 +49,26 @@ const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail }: KanbanBoardProps) =>
     return grouped;
   }, [filteredClaims, statuses]);
 
+  const handleDragStart = (result: DropResult) => {
+    setDraggedClaimId(result.draggableId);
+  };
+
+  const handleDragUpdate = (update: DragUpdate) => {
+    if (update.destination) {
+      setDragDestination({
+        droppableId: update.destination.droppableId,
+        index: update.destination.index
+      });
+    } else {
+      setDragDestination(null);
+    }
+  };
+
   const handleDragEnd = (result: DropResult) => {
     const { source, destination, draggableId, type } = result;
+
+    setDraggedClaimId(null);
+    setDragDestination(null);
 
     if (!destination) return;
 
@@ -91,6 +112,16 @@ const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail }: KanbanBoardProps) =>
     };
     return map[color] || 'bg-gray-500';
   };
+
+  // Componente para el preview de drop (similar al botón de agregar)
+  const DropPreview = () => (
+    <div className="p-3 rounded-lg border-2 border-dashed border-blue-400 bg-blue-50/50 opacity-60 animate-pulse">
+      <div className="flex items-center justify-center gap-2 text-blue-700">
+        <Plus className="w-4 h-4" />
+        <span className="text-sm font-medium">Soltar aquí</span>
+      </div>
+    </div>
+  );
 
   const selectedStatusObjects = statuses.filter(s => selectedStatuses.includes(s.name as ClaimStatus));
 
@@ -205,7 +236,7 @@ const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail }: KanbanBoardProps) =>
         </div>
       </div>
 
-      <DragDropContext onDragEnd={handleDragEnd}>
+      <DragDropContext onDragStart={handleDragStart} onDragUpdate={handleDragUpdate} onDragEnd={handleDragEnd}>
         <div className="overflow-x-auto pb-4">
           <Droppable droppableId="all-columns" direction="horizontal" type="column">
             {(provided) => (
@@ -239,27 +270,56 @@ const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail }: KanbanBoardProps) =>
                             <div
                               ref={provided.innerRef}
                               {...provided.droppableProps}
-                              className={`flex-1 bg-gradient-to-b from-white via-neutral-50/30 to-white rounded-b-lg p-4 space-y-3 min-h-[500px] transition-colors ${snapshot.isDraggingOver ? 'bg-gradient-to-b from-blue-50/50 via-neutral-100/50 to-blue-50/50' : ''
-                                }`}
+                              className={`flex-1 bg-gradient-to-b from-white via-neutral-50/30 to-white rounded-b-lg p-4 space-y-3 min-h-[500px] transition-all duration-200 ${snapshot.isDraggingOver ? 'bg-gradient-to-b from-blue-50/50 via-blue-100/40 to-blue-50/50' : ''}`}
                             >
-                              {(claimsByStatus[status.name] || []).map((claim, index) => (
-                                <Draggable key={claim.id} draggableId={claim.id} index={index}>
-                                  {(provided, snapshot) => (
-                                    <div
-                                      ref={provided.innerRef}
-                                      {...provided.draggableProps}
-                                      {...provided.dragHandleProps}
-                                      className={snapshot.isDragging ? 'opacity-50' : ''}
-                                    >
-                                      <KanbanCard
-                                        claim={claim}
-                                        onClick={() => onOpenClaimDetail(claim.id)}
-                                      />
-                                    </div>
-                                  )}
-                                </Draggable>
-                              ))}
-                              {provided.placeholder}
+                              {(claimsByStatus[status.name] || []).map((claim, index) => {
+                                const showPlaceholderBefore = dragDestination 
+                                  && dragDestination.droppableId === status.name 
+                                  && dragDestination.index === index 
+                                  && draggedClaimId;
+                                
+                                return (
+                                  <div key={claim.id}>
+                                    {showPlaceholderBefore && (
+                                      <div className="mb-3">
+                                        <DropPreview />
+                                      </div>
+                                    )}
+                                    <Draggable draggableId={claim.id} index={index}>
+                                      {(provided, snapshot) => (
+                                        <div
+                                          ref={provided.innerRef}
+                                          {...provided.draggableProps}
+                                          {...provided.dragHandleProps}
+                                          className={snapshot.isDragging ? 'opacity-50 rotate-2' : ''}
+                                        >
+                                          <KanbanCard
+                                            claim={claim}
+                                            onClick={() => onOpenClaimDetail(claim.id)}
+                                          />
+                                        </div>
+                                      )}
+                                    </Draggable>
+                                  </div>
+                                );
+                              })}
+                              
+                              {/* Mostrar preview al final si el destino es la última posición */}
+                              {dragDestination 
+                                && dragDestination.droppableId === status.name 
+                                && dragDestination.index === (claimsByStatus[status.name] || []).length
+                                && draggedClaimId && (
+                                  <DropPreview />
+                                )}
+                              
+                              {/* Botón para agregar nuevo reclamo */}
+                              <button
+                                onClick={() => onCreateClaimWithStatus ? onCreateClaimWithStatus(status.name) : onOpenNewClaim()}
+                                className="w-full mt-2 p-3 rounded-lg border-2 border-dashed border-neutral-300 hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-200 flex items-center justify-center gap-2 text-neutral-600 hover:text-blue-600 group"
+                              >
+                                <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                <span className="text-sm font-medium">Agregar reclamo</span>
+                              </button>
                             </div>
                           )}
                         </Droppable>

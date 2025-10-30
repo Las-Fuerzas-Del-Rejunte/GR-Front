@@ -10,9 +10,10 @@ import { User, Mail, FileText, MessageSquare, Upload, X, Image, Video } from 'lu
 interface NewClaimFormProps {
   onClose: () => void;
   onSuccess: () => void;
+  initialStatus?: string;
 }
 
-const NewClaimForm = ({ onClose, onSuccess }: NewClaimFormProps) => {
+const NewClaimForm = ({ onClose, onSuccess, initialStatus }: NewClaimFormProps) => {
   const { addClaim } = useClaims();
   const { statuses } = useStatuses();
   const [formData, setFormData] = useState({
@@ -87,8 +88,7 @@ const NewClaimForm = ({ onClose, onSuccess }: NewClaimFormProps) => {
       return;
     }
 
-    const firstStatus = statuses[0]?.name || 'Nuevo';
-    const status: ClaimStatus = firstStatus;
+    const status: ClaimStatus = initialStatus || statuses[0]?.name || 'Nuevo';
     addClaim({
       ...formData,
       status,
