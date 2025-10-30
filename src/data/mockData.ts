@@ -1,4 +1,29 @@
-import { Claim, ClaimNote } from '../types/claim';
+import { Claim, ClaimNote, User } from '../types/claim';
+
+// Usuarios mock para asignaciones
+const mockUsers: User[] = [
+  {
+    id: '2',
+    email: 'agente@sistema.com',
+    name: 'Agente de Servicio',
+    role: 'agent',
+    position: 'Agente Senior'
+  },
+  {
+    id: '3',
+    email: 'maria.gonzalez@sistema.com',
+    name: 'María González',
+    role: 'agent',
+    position: 'Agente'
+  },
+  {
+    id: '4',
+    email: 'carlos.rodriguez@sistema.com',
+    name: 'Carlos Rodriguez',
+    role: 'agent',
+    position: 'Técnico Senior'
+  }
+];
 
 const notes: ClaimNote[] = [
   {
@@ -46,6 +71,8 @@ export const mockClaims: Claim[] = [
     contactInfo: 'juan.perez@email.com',
     description: 'El producto llegó con daños visibles en el empaque exterior. Al abrirlo, se observó que el artículo principal está roto. Solicito reemplazo inmediato.',
     status: 'En Proceso',
+    assignedTo: mockUsers[0],
+    priority: 'high',
     createdAt: new Date('2025-10-20T09:15:00'),
     updatedAt: new Date('2025-10-21T14:20:00'),
     notes: notes.filter(n => n.claimId === 'claim-1')
@@ -57,6 +84,8 @@ export const mockClaims: Claim[] = [
     contactInfo: '+54 11 4567-8901',
     description: 'Me cobraron dos veces la misma orden #4521. Necesito que se me devuelva el pago duplicado lo antes posible. Adjunto comprobantes bancarios.',
     status: 'Nuevo',
+    assignedTo: mockUsers[1],
+    priority: 'urgent',
     createdAt: new Date('2025-10-22T11:30:00'),
     updatedAt: new Date('2025-10-22T11:30:00'),
     notes: []
@@ -68,6 +97,8 @@ export const mockClaims: Claim[] = [
     contactInfo: 'carlos.gomez@empresa.com',
     description: 'Mi pedido tenía fecha de entrega estimada para el 15 de octubre y aún no ha llegado. El tracking muestra que está detenido en el centro de distribución hace 5 días.',
     status: 'Esperando Respuesta',
+    assignedTo: mockUsers[2],
+    priority: 'medium',
     createdAt: new Date('2025-10-18T14:20:00'),
     updatedAt: new Date('2025-10-19T09:15:00'),
     notes: notes.filter(n => n.claimId === 'claim-3')
@@ -79,6 +110,8 @@ export const mockClaims: Claim[] = [
     contactInfo: 'laura.f@email.com',
     description: 'Pedí una camisa talla M en color azul (SKU: CAM-123-M-AZ) pero recibí una talla L en color rojo. Necesito el cambio por el producto correcto.',
     status: 'Nuevo',
+    assignedTo: null,
+    priority: 'medium',
     createdAt: new Date('2025-10-22T10:00:00'),
     updatedAt: new Date('2025-10-22T10:00:00'),
     notes: []
@@ -90,6 +123,8 @@ export const mockClaims: Claim[] = [
     contactInfo: '+54 11 5678-9012',
     description: 'Realicé una compra por $15,000 que debería sumar 1,500 puntos a mi cuenta, pero el sistema solo acreditó 500 puntos. Solicito la corrección correspondiente.',
     status: 'Resuelto',
+    assignedTo: mockUsers[0],
+    priority: 'low',
     createdAt: new Date('2025-10-17T16:45:00'),
     updatedAt: new Date('2025-10-18T16:45:00'),
     notes: notes.filter(n => n.claimId === 'claim-5')
@@ -101,6 +136,8 @@ export const mockClaims: Claim[] = [
     contactInfo: 'ana.lopez@email.com',
     description: 'El producto recibido no coincide con la descripción del sitio web. Las especificaciones técnicas son diferentes y el material es de menor calidad.',
     status: 'En Proceso',
+    assignedTo: mockUsers[1],
+    priority: 'medium',
     createdAt: new Date('2025-10-19T13:00:00'),
     updatedAt: new Date('2025-10-20T10:30:00'),
     notes: []
@@ -112,6 +149,8 @@ export const mockClaims: Claim[] = [
     contactInfo: 'diego.m@empresa.com',
     description: 'Compré un producto hace 3 días pero encontré el mismo artículo en otra tienda a menor precio. Dentro del período de garantía de mejor precio, solicito el ajuste.',
     status: 'Nuevo',
+    assignedTo: null,
+    priority: 'low',
     createdAt: new Date('2025-10-22T08:00:00'),
     updatedAt: new Date('2025-10-22T08:00:00'),
     notes: notes.filter(n => n.claimId === 'claim-7')
@@ -123,6 +162,8 @@ export const mockClaims: Claim[] = [
     contactInfo: '+54 11 6789-0123',
     description: 'El producto falló dentro del período de garantía pero me están cobrando por la reparación. Tengo todos los comprobantes de compra y la garantía vigente.',
     status: 'Esperando Respuesta',
+    assignedTo: mockUsers[2],
+    priority: 'high',
     createdAt: new Date('2025-10-16T09:30:00'),
     updatedAt: new Date('2025-10-18T15:00:00'),
     notes: []
@@ -134,6 +175,8 @@ export const mockClaims: Claim[] = [
     contactInfo: 'fernando.castro@email.com',
     description: 'El tracking muestra que mi paquete fue entregado hace 2 días, pero nunca lo recibí. He verificado con vecinos y portería sin resultado.',
     status: 'En Proceso',
+    assignedTo: mockUsers[0],
+    priority: 'urgent',
     createdAt: new Date('2025-10-19T10:15:00'),
     updatedAt: new Date('2025-10-21T09:00:00'),
     notes: []
@@ -145,6 +188,8 @@ export const mockClaims: Claim[] = [
     contactInfo: 'sofia.morales@email.com',
     description: 'Tengo un cupón de descuento del 20% (código: DESC20) que no se está aplicando en el checkout. El cupón es válido hasta fin de mes.',
     status: 'Resuelto',
+    assignedTo: mockUsers[1],
+    priority: 'low',
     createdAt: new Date('2025-10-15T11:20:00'),
     updatedAt: new Date('2025-10-16T14:30:00'),
     notes: []
@@ -156,6 +201,8 @@ export const mockClaims: Claim[] = [
     contactInfo: '+54 11 7890-1234',
     description: 'La factura que recibí tiene errores en los datos fiscales de mi empresa. Necesito una factura corregida con los datos correctos para presentar a contabilidad.',
     status: 'Nuevo',
+    assignedTo: null,
+    priority: 'medium',
     createdAt: new Date('2025-10-22T09:45:00'),
     updatedAt: new Date('2025-10-22T09:45:00'),
     notes: []
@@ -167,6 +214,8 @@ export const mockClaims: Claim[] = [
     contactInfo: 'gabriela.sanchez@email.com',
     description: 'El producto llegó con el empaque visiblemente dañado y el artículo interior presenta abolladuras. Solicito reemplazo o reembolso completo.',
     status: 'Esperando Respuesta',
+    assignedTo: mockUsers[2],
+    priority: 'high',
     createdAt: new Date('2025-10-17T15:30:00'),
     updatedAt: new Date('2025-10-19T11:00:00'),
     notes: []
@@ -178,6 +227,8 @@ export const mockClaims: Claim[] = [
     contactInfo: 'ricardo.blanco@empresa.com',
     description: 'Solicité la cancelación del pedido #7834 dentro de las 2 horas posteriores a la compra, pero el producto fue enviado de todas formas.',
     status: 'En Proceso',
+    assignedTo: mockUsers[0],
+    priority: 'medium',
     createdAt: new Date('2025-10-20T13:00:00'),
     updatedAt: new Date('2025-10-21T10:15:00'),
     notes: []
@@ -189,6 +240,8 @@ export const mockClaims: Claim[] = [
     contactInfo: '+54 11 8901-2345',
     description: 'Mi pedido incluía 3 artículos pero solo recibí 2. Falta el producto SKU: ACC-456. La factura muestra los 3 items cobrados correctamente.',
     status: 'Nuevo',
+    assignedTo: null,
+    priority: 'high',
     createdAt: new Date('2025-10-22T12:15:00'),
     updatedAt: new Date('2025-10-22T12:15:00'),
     notes: []
@@ -200,6 +253,8 @@ export const mockClaims: Claim[] = [
     contactInfo: 'andres.vega@email.com',
     description: 'Durante la compra había una promoción 3x2 en ciertos productos que compré, pero se me cobraron los 3 artículos al precio completo.',
     status: 'Resuelto',
+    assignedTo: mockUsers[1],
+    priority: 'low',
     createdAt: new Date('2025-10-14T10:00:00'),
     updatedAt: new Date('2025-10-15T16:00:00'),
     notes: []
@@ -211,6 +266,8 @@ export const mockClaims: Claim[] = [
     contactInfo: 'carolina.mendez@email.com',
     description: 'Intenté realizar el pago con tarjeta de crédito pero el sistema lo rechazó. Mi banco confirma que no hay problemas con la tarjeta y tienen fondos disponibles.',
     status: 'Esperando Respuesta',
+    assignedTo: mockUsers[1],
+    priority: 'medium',
     createdAt: new Date('2025-10-21T14:30:00'),
     updatedAt: new Date('2025-10-21T16:45:00'),
     notes: []
@@ -222,6 +279,8 @@ export const mockClaims: Claim[] = [
     contactInfo: '+54 11 9012-3456',
     description: 'Necesito cambiar la dirección de entrega del pedido #9123 ya que me mudé. El pedido aún no ha sido despachado según el tracking.',
     status: 'En Proceso',
+    assignedTo: mockUsers[2],
+    priority: 'medium',
     createdAt: new Date('2025-10-21T09:00:00'),
     updatedAt: new Date('2025-10-21T15:30:00'),
     notes: []
@@ -233,6 +292,8 @@ export const mockClaims: Claim[] = [
     contactInfo: 'natalia.campos@empresa.com',
     description: 'Envié un producto en devolución hace 10 días y aún no he recibido el reembolso. Tengo el comprobante de envío y el tracking muestra que llegó al depósito.',
     status: 'Nuevo',
+    assignedTo: null,
+    priority: 'high',
     createdAt: new Date('2025-10-22T10:30:00'),
     updatedAt: new Date('2025-10-22T10:30:00'),
     notes: []
@@ -244,6 +305,8 @@ export const mockClaims: Claim[] = [
     contactInfo: 'pablo.ramirez@email.com',
     description: 'El número de tracking proporcionado no funciona en ningún sistema de seguimiento. Necesito información correcta sobre el estado de mi envío.',
     status: 'En Proceso',
+    assignedTo: mockUsers[0],
+    priority: 'low',
     createdAt: new Date('2025-10-20T11:45:00'),
     updatedAt: new Date('2025-10-21T13:00:00'),
     notes: []

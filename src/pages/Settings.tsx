@@ -1,18 +1,23 @@
 import { useState } from 'react';
 import { useStatuses } from '../context/StatusContext';
+import { useToast } from '../context/ToastContext';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
-import { Trash2, Edit2, Check, X } from 'lucide-react';
+import Modal from '../components/ui/Modal';
+import { Trash2, Edit2, Check, X, Plus, Settings as SettingsIcon, AlertTriangle } from 'lucide-react';
 
 const Settings = () => {
   const { statuses, addStatus, deleteStatus, updateStatus } = useStatuses();
+  const { showToast } = useToast();
   const [isAddingStatus, setIsAddingStatus] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newStatusName, setNewStatusName] = useState('');
   const [newStatusColor, setNewStatusColor] = useState('blue');
   const [editName, setEditName] = useState('');
   const [editColor, setEditColor] = useState('');
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [statusToDelete, setStatusToDelete] = useState<{ id: string; name: string } | null>(null);
 
   const colorOptions = [
     { value: 'blue', label: 'Azul', bg: 'bg-blue-100', text: 'text-blue-700' },
@@ -46,10 +51,28 @@ const Settings = () => {
     setEditingId(null);
   };
 
-  const handleDeleteStatus = (statusId: string) => {
-    if (confirm('¿Estás seguro de eliminar este estado? Los reclamos con este estado podrían quedar sin categoría.')) {
-      deleteStatus(statusId);
+  const handleDeleteClick = (statusId: string, statusName: string) => {
+    setStatusToDelete({ id: statusId, name: statusName });
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (statusToDelete) {
+      deleteStatus(statusToDelete.id);
+      showToast({
+        type: 'success',
+        title: 'Estado eliminado',
+        message: `El estado "${statusToDelete.name}" ha sido eliminado correctamente.`,
+        duration: 3000
+      });
+      setDeleteModalOpen(false);
+      setStatusToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setDeleteModalOpen(false);
+    setStatusToDelete(null);
   };
 
   const getColorClasses = (color: string) => {
@@ -58,139 +81,206 @@ const Settings = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Configuración</h1>
-          <p className="text-sm text-gray-600 mt-1">Gestiona los estados del sistema</p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+            <SettingsIcon className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Configuración</h1>
+            <p className="text-sm text-gray-600 mt-1">Gestiona los estados del sistema</p>
+          </div>
         </div>
       </div>
 
       <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">Estados de Reclamos</h2>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Estados de Reclamos</h2>
+            <p className="text-sm text-gray-600 mt-1">Personaliza los estados disponibles para los reclamos</p>
+          </div>
           {!isAddingStatus && (
-            <Button onClick={() => setIsAddingStatus(true)} size="sm">
+            <Button onClick={() => setIsAddingStatus(true)} size="md" className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
               Agregar Estado
             </Button>
           )}
         </div>
 
-        {isAddingStatus && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Nuevo Estado</h3>
-            <div className="space-y-3">
-              <Input
-                placeholder="Nombre del estado"
-                value={newStatusName}
-                onChange={(e) => setNewStatusName(e.target.value)}
-              />
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {colorOptions.map(color => (
-                    <button
-                      key={color.value}
-                      onClick={() => setNewStatusColor(color.value)}
-                      className={`flex items-center space-x-2 px-3 py-2 rounded-lg border-2 transition-all ${newStatusColor === color.value
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                    >
-                      <div className={`w-4 h-4 rounded ${color.bg}`} />
-                      <span className="text-sm">{color.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex space-x-2">
-                <Button onClick={handleAddStatus} size="sm">
-                  <Check className="w-4 h-4 mr-1" />
-                  Guardar
-                </Button>
-                <Button onClick={() => setIsAddingStatus(false)} variant="secondary" size="sm">
-                  <X className="w-4 h-4 mr-1" />
-                  Cancelar
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* El formulario de creación se movió a un modal más abajo */}
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           {statuses.map(status => {
             const colors = getColorClasses(status.color);
-            const isEditing = editingId === status.id;
-
             return (
               <div
                 key={status.id}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                className="bg-white rounded-xl border border-neutral-200 shadow-sm hover:shadow-md transition-all"
               >
-                {isEditing ? (
-                  <div className="flex-1 space-y-3">
-                    <Input
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                    />
-                    <div className="grid grid-cols-3 gap-2">
-                      {colorOptions.map(color => (
-                        <button
-                          key={color.value}
-                          onClick={() => setEditColor(color.value)}
-                          className={`flex items-center space-x-2 px-3 py-2 rounded-lg border-2 transition-all ${editColor === color.value
-                              ? 'border-blue-500 bg-blue-50'
-                              : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                        >
-                          <div className={`w-4 h-4 rounded ${color.bg}`} />
-                          <span className="text-sm">{color.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button onClick={handleUpdateStatus} size="sm">
-                        <Check className="w-4 h-4 mr-1" />
-                        Guardar
-                      </Button>
-                      <Button onClick={() => setEditingId(null)} variant="secondary" size="sm">
-                        <X className="w-4 h-4 mr-1" />
-                        Cancelar
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-center space-x-3">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${colors.bg} ${colors.text}`}>
+                <div className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${colors.bg} ${colors.text} shadow-sm`}>
                         {status.name}
                       </span>
                     </div>
                     <div className="flex space-x-2">
                       <button
                         onClick={() => startEdit(status.id, status.name, status.color)}
-                        className="p-2 text-gray-500 hover:text-blue-600 hover:bg-white rounded-lg transition-colors"
+                        className="p-3 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all hover:shadow-sm"
+                        title="Editar estado"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteStatus(status.id)}
-                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-white rounded-lg transition-colors"
+                        onClick={() => handleDeleteClick(status.id, status.name)}
+                        className="p-3 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all hover:shadow-sm"
+                        title="Eliminar estado"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                  </>
-                )}
+                  </div>
+                </div>
               </div>
             );
           })}
         </div>
 
         {statuses.length === 0 && (
-          <p className="text-center text-gray-500 py-8">No hay estados configurados</p>
+          <div className="text-center py-12">
+            <SettingsIcon className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 text-lg">No hay estados configurados</p>
+            <p className="text-gray-400 text-sm mt-1">Agrega tu primer estado para comenzar</p>
+          </div>
         )}
       </Card>
+
+      {/* Modal: Crear Estado */}
+      <Modal isOpen={isAddingStatus} onClose={() => setIsAddingStatus(false)} title="Nuevo Estado">
+        <div className="space-y-5">
+          <Input
+            placeholder="Nombre del estado"
+            value={newStatusName}
+            onChange={(e) => setNewStatusName(e.target.value)}
+            icon={<SettingsIcon className="w-4 h-4" />}
+            error={!newStatusName.trim() ? 'El nombre es requerido' : ''}
+          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">Color del estado</label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {colorOptions.map(color => (
+                <button
+                  key={color.value}
+                  onClick={() => setNewStatusColor(color.value)}
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg border-2 transition-all ${
+                    newStatusColor === color.value
+                      ? 'border-blue-500 bg-blue-50 shadow-md'
+                      : 'border-neutral-200 hover:border-neutral-300 bg-white hover:shadow-sm'
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded-full ${color.bg} border-2 border-white shadow-sm`} />
+                  <span className="text-sm font-medium">{color.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button onClick={() => setIsAddingStatus(false)} variant="secondary">
+              <X className="w-4 h-4" />
+              Cancelar
+            </Button>
+            <Button onClick={handleAddStatus} disabled={!newStatusName.trim()}>
+              <Check className="w-4 h-4" />
+              Guardar Estado
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal: Editar Estado */}
+      <Modal isOpen={editingId !== null} onClose={() => setEditingId(null)} title="Editar Estado">
+        <div className="space-y-5">
+          <Input
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            icon={<SettingsIcon className="w-4 h-4" />}
+            placeholder="Nombre del estado"
+            error={!editName.trim() ? 'El nombre es requerido' : ''}
+          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">Color del estado</label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {colorOptions.map(color => (
+                <button
+                  key={color.value}
+                  onClick={() => setEditColor(color.value)}
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg border-2 transition-all ${
+                    editColor === color.value
+                      ? 'border-blue-500 bg-blue-50 shadow-md'
+                      : 'border-neutral-200 hover:border-neutral-300 bg-white hover:shadow-sm'
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded-full ${color.bg} border-2 border-white shadow-sm`} />
+                  <span className="text-sm font-medium">{color.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button onClick={() => setEditingId(null)} variant="secondary">
+              <X className="w-4 h-4" />
+              Cancelar
+            </Button>
+            <Button onClick={handleUpdateStatus} disabled={!editName.trim()}>
+              <Check className="w-4 h-4" />
+              Guardar Cambios
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de confirmación para eliminar */}
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={cancelDelete}
+        title="Confirmar Eliminación"
+      >
+        <div className="space-y-5">
+          <div className="flex items-center gap-3 p-4 bg-red-50/80 border border-red-200 rounded-lg">
+            <AlertTriangle className="w-6 h-6 text-red-600" />
+            <div>
+              <h3 className="font-semibold text-red-900">¿Eliminar estado?</h3>
+              <p className="text-sm text-red-700">
+                Estás a punto de eliminar el estado <strong>"{statusToDelete?.name}"</strong>
+              </p>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            <p className="text-sm text-gray-700">
+              <strong>Advertencia:</strong> Esta acción no se puede deshacer. Los reclamos que tengan este estado podrían quedar sin categoría.
+            </p>
+            
+            <div className="bg-yellow-50/80 border border-yellow-200 rounded-lg p-3">
+              <p className="text-sm text-yellow-800">
+                <strong>Recomendación:</strong> Antes de eliminar, considera cambiar el estado de los reclamos afectados a otro estado existente.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button onClick={cancelDelete} variant="secondary">
+              Cancelar
+            </Button>
+            <Button onClick={confirmDelete} className="bg-red-600 hover:bg-red-700 text-white">
+              <Trash2 className="w-4 h-4" />
+              Eliminar Estado
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
