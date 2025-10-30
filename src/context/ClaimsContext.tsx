@@ -7,6 +7,7 @@ interface ClaimsContextType {
   addClaim: (claim: Omit<Claim, 'id' | 'createdAt' | 'updatedAt' | 'notes'>) => void;
   updateClaimStatus: (claimId: string, newStatus: ClaimStatus) => void;
   addClaimNote: (claimId: string, content: string, author: string) => void;
+  deleteClaim: (claimId: string) => void;
   getClaimById: (claimId: string) => Claim | undefined;
   searchClaims: (query: string) => Claim[];
 }
@@ -55,6 +56,10 @@ export const ClaimsProvider = ({ children }: { children: ReactNode }) => {
     ));
   };
 
+  const deleteClaim = (claimId: string) => {
+    setClaims(prev => prev.filter(claim => claim.id !== claimId));
+  };
+
   const getClaimById = (claimId: string) => {
     return claims.find(claim => claim.id === claimId);
   };
@@ -77,6 +82,7 @@ export const ClaimsProvider = ({ children }: { children: ReactNode }) => {
       addClaim,
       updateClaimStatus,
       addClaimNote,
+      deleteClaim,
       getClaimById,
       searchClaims
     }}>

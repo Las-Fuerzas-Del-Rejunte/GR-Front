@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --destructive-foreground: oklch(1 0 0);
+  --color-emerald-500: oklch(0.647 0.177 163.222);
+  --color-blue-500: oklch(0.623 0.214 252.895);
+  --color-violet-500: oklch(0.585 0.241 295.755);
+  --color-green-500: oklch(0.647 0.177 163.222);
+  --color-purple-500: oklch(0.585 0.241 295.755);
+  --color-red-500: oklch(0.628 0.257 29.234);
+  --color-amber-500: oklch(0.745 0.181 86.011);
+}
+
+.dark {
+  --destructive-foreground: oklch(1 0 0);
+}
+
 @layer utilities {
   .glass {
     @apply bg-white/60 border border-white/30 shadow-sm backdrop-blur-md;

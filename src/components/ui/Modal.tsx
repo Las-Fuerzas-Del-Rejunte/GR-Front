@@ -6,9 +6,10 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
+  footer?: ReactNode;
 }
 
-const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
+const Modal = ({ isOpen, onClose, title, children, footer }: ModalProps) => {
   const [animateIn, setAnimateIn] = useState(false);
   useEffect(() => {
     if (isOpen) {
@@ -23,6 +24,23 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
       document.body.style.overflow = 'unset';
     };
   }, [isOpen]);
+
+  // Cerrar modal con tecla Escape
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -48,6 +66,12 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
           <div className="p-6 flex-1 overflow-y-auto nice-scroll">
             {children}
           </div>
+
+          {footer && (
+            <div className="sticky bottom-0 glass-header px-6 py-4 border-t border-white/30 rounded-b-xl">
+              {footer}
+            </div>
+          )}
         </div>
       </div>
     </div>

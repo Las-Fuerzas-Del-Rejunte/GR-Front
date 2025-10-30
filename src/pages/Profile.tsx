@@ -69,15 +69,9 @@ const Profile = () => {
           </div>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Mi Perfil</h1>
-            <p className="text-sm text-gray-600 mt-1">Gestiona tu información personal y preferencias</p>
+            <p className="text-sm text-gray-600 mt-1">Gestiona tu información personal</p>
           </div>
         </div>
-        {!isEditing && (
-          <Button onClick={() => setIsEditing(true)} className="flex items-center gap-2">
-            <Edit2 className="w-4 h-4" />
-            Editar Perfil
-          </Button>
-        )}
       </div>
 
       <div className="space-y-8">
@@ -117,24 +111,54 @@ const Profile = () => {
           </div>
         </Card>
 
+        {/* Estadísticas */}
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-6">Estadísticas de Trabajo</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Reclamos Asignados</p>
+                  <p className="text-2xl font-bold text-gray-900">12</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Resueltos este mes</p>
+                  <p className="text-2xl font-bold text-gray-900">8</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-violet-50 rounded-lg border border-purple-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Tiempo promedio</p>
+                  <p className="text-2xl font-bold text-gray-900">2.5 días</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
         {/* Información Detallada */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Información de Contacto */}
           <Card className="p-6">
-            <div className="flex items-center justify-between mb-6">
+            <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-900">Información de Contacto</h3>
-              {isEditing && (
-                <div className="flex gap-2">
-                  <Button onClick={handleCancel} variant="secondary" size="sm">
-                    <X className="w-4 h-4" />
-                    Cancelar
-                  </Button>
-                  <Button onClick={handleSave} size="sm">
-                    <Save className="w-4 h-4" />
-                    Guardar
-                  </Button>
-                </div>
-              )}
             </div>
             <div className="space-y-4">
               <div>
@@ -157,21 +181,11 @@ const Profile = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Correo Electrónico</label>
-                {isEditing ? (
-                  <Input
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    icon={<Mail className="w-4 h-4" />}
-                    placeholder="tu@email.com"
-                  />
-                ) : (
-                  <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                    <Mail className="w-5 h-5 text-green-600" />
-                    <span className="text-gray-900 font-medium">{user?.email}</span>
-                  </div>
-                )}
+                <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                  <Mail className="w-5 h-5 text-green-600" />
+                  <span className="text-gray-900 font-medium">{user?.email}</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">El correo no puede ser modificado</p>
               </div>
 
               <div>
@@ -196,123 +210,43 @@ const Profile = () => {
 
           {/* Información Laboral */}
           <Card className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Información Laboral</h3>
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">Información Laboral</h3>
+              <p className="text-xs text-gray-500 mt-1">La información laboral no puede ser modificada</p>
+            </div>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Departamento</label>
-                {isEditing ? (
-                  <Input
-                    name="department"
-                    value={formData.department}
-                    onChange={handleInputChange}
-                    icon={<Building className="w-4 h-4" />}
-                    placeholder="Departamento"
-                  />
-                ) : (
-                  <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-200">
-                    <Building className="w-5 h-5 text-orange-600" />
-                    <span className="text-gray-900 font-medium">{user?.department || 'No especificado'}</span>
-                  </div>
-                )}
+                <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-200">
+                  <Building className="w-5 h-5 text-orange-600" />
+                  <span className="text-gray-900 font-medium">{user?.department || 'No especificado'}</span>
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Cargo</label>
-                {isEditing ? (
-                  <Input
-                    name="position"
-                    value={formData.position}
-                    onChange={handleInputChange}
-                    icon={<Shield className="w-4 h-4" />}
-                    placeholder="Tu cargo"
-                  />
-                ) : (
-                  <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg border border-indigo-200">
-                    <Shield className="w-5 h-5 text-indigo-600" />
-                    <span className="text-gray-900 font-medium">{user?.position || 'No especificado'}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Estadísticas y Preferencias */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Estadísticas */}
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Estadísticas de Trabajo</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Reclamos Asignados</p>
-                    <p className="text-2xl font-bold text-gray-900">12</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-                    <CheckCircle className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Resueltos este mes</p>
-                    <p className="text-2xl font-bold text-gray-900">8</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-violet-50 rounded-lg border border-purple-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
-                    <Calendar className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Tiempo promedio</p>
-                    <p className="text-2xl font-bold text-gray-900">2.5 días</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Preferencias */}
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Preferencias del Sistema</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-neutral-50 rounded-lg border border-gray-200">
-                <div className="flex items-center gap-3">
-                  <Mail className="w-5 h-5 text-gray-600" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Notificaciones por email</p>
-                    <p className="text-xs text-gray-600">Recibe actualizaciones importantes</p>
-                  </div>
-                </div>
-                <div className="w-12 h-6 bg-blue-500 rounded-full relative cursor-pointer">
-                  <div className="w-5 h-5 bg-white rounded-full absolute right-0.5 top-0.5 shadow-sm"></div>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-neutral-50 rounded-lg border border-gray-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-5 h-5 bg-gray-400 rounded"></div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Modo oscuro</p>
-                    <p className="text-xs text-gray-600">Cambiar tema de la interfaz</p>
-                  </div>
-                </div>
-                <div className="w-12 h-6 bg-gray-300 rounded-full relative cursor-pointer">
-                  <div className="w-5 h-5 bg-white rounded-full absolute left-0.5 top-0.5 shadow-sm"></div>
+                <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg border border-indigo-200">
+                  <Shield className="w-5 h-5 text-indigo-600" />
+                  <span className="text-gray-900 font-medium">{user?.position || 'No especificado'}</span>
                 </div>
               </div>
             </div>
           </Card>
         </div>
+
+        {/* Botones de acción debajo del grid */}
+        {isEditing && (
+          <div className="flex justify-end gap-4">
+            <Button onClick={handleCancel} variant="secondary" size="lg">
+              <X className="w-5 h-5" />
+              Cancelar
+            </Button>
+            <Button onClick={handleSave} size="lg">
+              <Save className="w-5 h-5" />
+              Guardar Cambios
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

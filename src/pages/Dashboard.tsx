@@ -1,9 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useClaims } from '../context/ClaimsContext';
 import { useStatuses } from '../context/StatusContext';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
-import { TrendingUp, AlertCircle, CheckCircle2, Info } from 'lucide-react';
+import AreaChartCards from '../components/AreaChartCards';
+import { Info } from 'lucide-react';
+import { Claim } from '../types/claim';
 
 const Dashboard = () => {
   const { claims } = useClaims();
@@ -59,7 +61,7 @@ const Dashboard = () => {
   const recentClaims = useMemo(() => {
     return [...claims]
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-      .slice(0, 5);
+      .slice(0, 10);
   }, [claims]);
 
   const maxCount = Math.max(...statusDistribution.map(s => s.count), 1);
@@ -86,43 +88,14 @@ const Dashboard = () => {
         <p className="text-sm text-neutral-600 mt-1">Resumen general del sistema</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="p-6 bg-gradient-to-br from-primary-50 to-white border-l-4 border-primary-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-neutral-600 uppercase tracking-wide">Reclamos Abiertos</p>
-              <p className="text-4xl font-bold text-neutral-900 mt-2">{kpis.totalOpen}</p>
-            </div>
-            <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
-              <AlertCircle className="w-7 h-7 text-white" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 bg-gradient-to-br from-amber-50 to-white border-l-4 border-amber-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-neutral-600 uppercase tracking-wide">Nuevos Hoy</p>
-              <p className="text-4xl font-bold text-neutral-900 mt-2">{kpis.newToday}</p>
-            </div>
-            <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
-              <TrendingUp className="w-7 h-7 text-white" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 bg-gradient-to-br from-emerald-50 to-white border-l-4 border-emerald-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-neutral-600 uppercase tracking-wide">Resueltos (7 días)</p>
-              <p className="text-4xl font-bold text-neutral-900 mt-2">{kpis.resolvedLastWeek}</p>
-            </div>
-            <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-              <CheckCircle2 className="w-7 h-7 text-white" />
-            </div>
-          </div>
-        </Card>
-      </div>
+      {/* KPI Cards con gráficos */}
+      <AreaChartCards 
+        claimsData={claims} 
+        totalOpen={kpis.totalOpen}
+        newToday={kpis.newToday}
+        resolvedLastWeek={kpis.resolvedLastWeek}
+        statuses={statuses}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <Card className="p-6 lg:col-span-9">
@@ -130,26 +103,7 @@ const Dashboard = () => {
             <h2 className="text-lg font-bold text-neutral-900">Distribución por Estado</h2>
             <InfoTip title="Cantidad de reclamos por estado actual, relativo al máximo del periodo." />
           </div>
-          <div className="space-y-4">
-            {statusDistribution.map(({ status, count, color }) => {
-              const percentage = (count / maxCount) * 100;
-
-              return (
-                <div key={status}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-neutral-700">{status}</span>
-                    <span className="text-sm font-bold text-neutral-900">{count}</span>
-                  </div>
-                  <div className="w-full bg-neutral-100 rounded-full h-3 overflow-hidden">
-                    <div
-                      className={`${getBarColor(color)} h-3 rounded-full transition-all duration-700 ease-out shadow-sm`}
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <AnimatedStatusBars items={statusDistribution} maxCount={maxCount} getBarColor={getBarColor} />
         </Card>
 
         <Card className="p-6 lg:col-span-3">
@@ -157,21 +111,9 @@ const Dashboard = () => {
             <h2 className="text-lg font-bold text-neutral-900">Actualizaciones Recientes</h2>
             <InfoTip title="Últimos reclamos actualizados, ordenados por fecha de modificación." />
           </div>
-          <div className="space-y-3">
-            {recentClaims.map(claim => (
-              <div
-                key={claim.id}
-                className="flex items-center justify-between p-4 bg-gradient-to-br from-white via-neutral-50/50 to-white rounded-xl hover:from-blue-50/30 hover:via-neutral-50/70 hover:to-blue-50/30 transition-colors border border-neutral-200 shadow-sm hover:shadow-md"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2 mb-1.5">
-                    <span className="text-xs font-mono text-neutral-500 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 px-2 py-0.5 rounded">{claim.id}</span>
-                    <Badge status={claim.status} />
-                  </div>
-                  <p className="text-sm font-medium text-neutral-900 truncate">{claim.customerName}</p>
-                  <p className="text-xs text-neutral-500 mt-0.5">{claim.subject}</p>
-                </div>
-              </div>
+          <div className="space-y-3 max-h-96 overflow-y-auto nice-scroll">
+            {recentClaims.map((claim, index) => (
+              <RecentClaimCard key={claim.id} claim={claim} index={index} />
             ))}
           </div>
         </Card>
@@ -181,6 +123,111 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+// --- Barras animadas de distribución de estados ---
+function AnimatedStatusBars({
+  items,
+  maxCount,
+  getBarColor,
+}: {
+  items: { status: string; count: number; color: string }[];
+  maxCount: number;
+  getBarColor: (c: string) => string;
+}) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 50);
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <div className="space-y-4">
+      {items.map(({ status, count, color }, index) => {
+        const percentage = (count / maxCount) * 100;
+        return (
+          <div
+            key={status}
+            className={`transition-all duration-500 ease-out ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}
+            style={{ transitionDelay: `${index * 100}ms` }}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-neutral-700">{status}</span>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200">
+                {count}
+              </span>
+            </div>
+            <div className="w-full h-3 bg-neutral-100 rounded-full overflow-hidden">
+              <div
+                className={`${getBarColor(color)} h-3 rounded-full shadow-sm transition-all duration-700 ease-out`}
+                style={{ width: mounted ? `${percentage}%` : '0%' }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// --- Componente auxiliar para tarjetas de actualizaciones recientes ---
+
+function RecentClaimCard({ claim, index }: { claim: Claim; index: number }) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    // Animación escalonada: cada elemento aparece 100ms después del anterior
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, index * 100);
+
+    return () => clearTimeout(timer);
+  }, [index]);
+
+  const formatRelativeTime = (date: Date) => {
+    const now = new Date();
+    const diffMs = now.getTime() - new Date(date).getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Justo ahora';
+    if (diffMins < 60) return `Hace ${diffMins} ${diffMins === 1 ? 'minuto' : 'minutos'}`;
+    if (diffHours < 24) return `Hace ${diffHours} ${diffHours === 1 ? 'hora' : 'horas'}`;
+    if (diffDays === 1) return 'Ayer';
+    if (diffDays < 7) return `Hace ${diffDays} días`;
+    
+    return new Date(date).toLocaleDateString('es-AR', {
+      day: '2-digit',
+      month: 'short'
+    });
+  };
+
+  return (
+    <div
+      className={`flex items-center justify-between p-4 bg-gradient-to-br from-white via-neutral-50/50 to-white rounded-xl hover:from-blue-50/30 hover:via-neutral-50/70 hover:to-blue-50/30 transition-all duration-300 border border-neutral-200 shadow-sm hover:shadow-md cursor-pointer transform ${
+        isVisible
+          ? 'opacity-100 translate-y-0 scale-100'
+          : 'opacity-0 translate-y-4 scale-95'
+      }`}
+    >
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center space-x-2 mb-1.5">
+          <span className="text-xs font-mono text-neutral-500 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 px-2 py-0.5 rounded animate-pulse">
+            {claim.id}
+          </span>
+          <Badge status={claim.status} />
+        </div>
+        <p className="text-sm font-medium text-neutral-900 truncate">{claim.customerName}</p>
+        <div className="flex items-center gap-1 mt-0.5">
+          <p className="text-xs text-neutral-500">{claim.subject}</p>
+          <span className="text-xs text-blue-600 font-medium animate-pulse">
+            • {formatRelativeTime(claim.updatedAt)}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // --- Componente auxiliar InfoTip ---
 

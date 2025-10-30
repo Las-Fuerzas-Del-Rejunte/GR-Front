@@ -1,4 +1,4 @@
-import { useState, FormEvent, useRef } from 'react';
+import { useState, FormEvent, useRef, ReactNode, forwardRef, useImperativeHandle } from 'react';
 import { useClaims } from '../context/ClaimsContext';
 import { useStatuses } from '../context/StatusContext';
 import Input from './ui/Input';
@@ -13,9 +13,14 @@ interface NewClaimFormProps {
   initialStatus?: string;
 }
 
-const NewClaimForm = ({ onClose, onSuccess, initialStatus }: NewClaimFormProps) => {
+export interface NewClaimFormRef {
+  submitForm: () => void;
+}
+
+const NewClaimForm = forwardRef<NewClaimFormRef, NewClaimFormProps>(({ onClose, onSuccess, initialStatus }, ref) => {
   const { addClaim } = useClaims();
   const { statuses } = useStatuses();
+  const formRef = useRef<HTMLFormElement>(null);
   const [formData, setFormData] = useState({
     customerName: '',
     contactInfo: '',
@@ -81,9 +86,7 @@ const NewClaimForm = ({ onClose, onSuccess, initialStatus }: NewClaimFormProps) 
     setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-
+  const submitForm = () => {
     if (!validateForm()) {
       return;
     }
@@ -103,8 +106,17 @@ const NewClaimForm = ({ onClose, onSuccess, initialStatus }: NewClaimFormProps) 
     onClose();
   };
 
+  useImperativeHandle(ref, () => ({
+    submitForm,
+  }));
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    submitForm();
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
       <Input
         label="Nombre del Cliente"
         placeholder="Ingrese el nombre completo"
@@ -223,17 +235,10 @@ const NewClaimForm = ({ onClose, onSuccess, initialStatus }: NewClaimFormProps) 
           </div>
         )}
       </div>
-
-      <div className="flex justify-end space-x-3 pt-6 border-t border-neutral-200">
-        <Button type="button" variant="secondary" onClick={onClose}>
-          Cancelar
-        </Button>
-        <Button type="submit" variant="primary">
-          Guardar Reclamo
-        </Button>
-      </div>
     </form>
   );
-};
+});
+
+NewClaimForm.displayName = 'NewClaimForm';
 
 export default NewClaimForm;
