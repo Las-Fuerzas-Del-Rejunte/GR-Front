@@ -73,22 +73,27 @@ const KanbanCard = ({ claim, onClick }: KanbanCardProps) => {
           </div>
         </div>
 
-        {/* Avatar de la persona asignada con tooltip */}
+        {/* Avatar/es de la persona asignada con tooltip */}
         <div className="relative group">
-          {claim.assignedTo ? (
+          {claim.assignedTo && claim.assignedTo.length > 0 ? (
             <>
-              <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
-                <span className="text-xs font-semibold text-white">
-                  {getInitials(claim.assignedTo.name)}
-                </span>
-              </div>
-              
-              {/* Tooltip mejorado */}
-              <div className="absolute right-0 bottom-full mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
-                <span className="font-medium">{claim.assignedTo.name}</span>
-                {claim.assignedTo.position && (
-                  <div className="text-gray-300 text-xs mt-0.5">{claim.assignedTo.position}</div>
+              <div className="relative">
+                <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
+                  <span className="text-xs font-semibold text-white">
+                    {getInitials(claim.assignedTo[0].name)}
+                  </span>
+                </div>
+                {claim.assignedTo.length > 1 && (
+                  <div className="absolute -right-2 -bottom-2 w-5 h-5 rounded-full bg-gray-800 text-white text-[10px] flex items-center justify-center shadow">
+                    +{claim.assignedTo.length - 1}
+                  </div>
                 )}
+              </div>
+              {/* Tooltip con todos los asignados */}
+              <div className="absolute right-0 bottom-full mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                <span className="font-medium">
+                  {claim.assignedTo.map(u => u.name).join(', ')}
+                </span>
                 <div className="absolute bottom-0 right-4 transform translate-y-full">
                   <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                 </div>
