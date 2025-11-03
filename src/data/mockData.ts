@@ -1,4 +1,4 @@
-import { Claim, ClaimNote, User } from '../types/claim';
+import { Claim, ClaimNote, User, AuditEvent } from '../types/claim';
 
 // Usuarios mock para asignaciones
 const mockUsers: User[] = [
@@ -7,6 +7,7 @@ const mockUsers: User[] = [
     email: 'agente@sistema.com',
     name: 'Agente de Servicio',
     role: 'agent',
+    department: 'Atención al Cliente',
     position: 'Agente Senior'
   },
   {
@@ -14,6 +15,7 @@ const mockUsers: User[] = [
     email: 'maria.gonzalez@sistema.com',
     name: 'María González',
     role: 'agent',
+    department: 'Atención al Cliente',
     position: 'Agente'
   },
   {
@@ -21,9 +23,79 @@ const mockUsers: User[] = [
     email: 'carlos.rodriguez@sistema.com',
     name: 'Carlos Rodriguez',
     role: 'agent',
+    department: 'Soporte Técnico',
     position: 'Técnico Senior'
   }
 ];
+
+// Función auxiliar para crear historial de auditoría mock
+const createMockAuditHistory = (claimId: string, createdAt: Date, assignedTo: User[] | null, priority: string | undefined, status: string): AuditEvent[] => {
+  const events: AuditEvent[] = [];
+  
+  // Evento de creación
+  events.push({
+    id: `audit-${claimId}-created`,
+    claimId,
+    type: 'created',
+    timestamp: createdAt,
+    user: 'Sistema',
+    details: {
+      description: 'Reclamo creado en el sistema',
+      area: 'Recepción'
+    }
+  });
+
+  // Si tiene asignación, agregar evento de asignación
+  if (assignedTo && assignedTo.length > 0) {
+    const assignTime = new Date(createdAt.getTime() + 5 * 60000); // 5 minutos después
+    events.push({
+      id: `audit-${claimId}-assigned`,
+      claimId,
+      type: 'assigned',
+      timestamp: assignTime,
+      user: 'Supervisor',
+      details: {
+        newValue: assignedTo,
+        area: assignedTo[0].department || 'Atención al Cliente'
+      }
+    });
+  }
+
+  // Si tiene prioridad, agregar evento de cambio de prioridad
+  if (priority) {
+    const priorityTime = new Date(createdAt.getTime() + 10 * 60000); // 10 minutos después
+    events.push({
+      id: `audit-${claimId}-priority`,
+      claimId,
+      type: 'priority_changed',
+      timestamp: priorityTime,
+      user: assignedTo?.[0]?.name || 'Agente de Servicio',
+      details: {
+        newValue: priority,
+        area: assignedTo?.[0]?.department || 'Atención al Cliente'
+      }
+    });
+  }
+
+  // Si no es "Nuevo", agregar evento de cambio de estado
+  if (status !== 'Nuevo') {
+    const statusTime = new Date(createdAt.getTime() + 30 * 60000); // 30 minutos después
+    events.push({
+      id: `audit-${claimId}-status-${status}`,
+      claimId,
+      type: 'status_changed',
+      timestamp: statusTime,
+      user: assignedTo?.[0]?.name || 'Agente de Servicio',
+      details: {
+        previousValue: 'Nuevo',
+        newValue: status,
+        area: assignedTo?.[0]?.department || 'Atención al Cliente'
+      }
+    });
+  }
+
+  return events;
+};
 
 const notes: ClaimNote[] = [
   {
@@ -75,7 +147,8 @@ export const mockClaims: Claim[] = [
     priority: 'high',
     createdAt: new Date('2025-10-20T09:15:00'),
     updatedAt: new Date('2025-10-21T14:20:00'),
-    notes: notes.filter(n => n.claimId === 'claim-1')
+    notes: notes.filter(n => n.claimId === 'claim-1'),
+    auditHistory: createMockAuditHistory('claim-1', new Date('2025-10-20T09:15:00'), [mockUsers[0]], 'high', 'En Proceso')
   },
   {
     id: 'claim-2',
@@ -88,7 +161,8 @@ export const mockClaims: Claim[] = [
     priority: 'urgent',
     createdAt: new Date('2025-10-22T11:30:00'),
     updatedAt: new Date('2025-10-22T11:30:00'),
-    notes: []
+    notes: [],
+    auditHistory: createMockAuditHistory('claim-2', new Date('2025-10-22T11:30:00'), [mockUsers[1]], 'urgent', 'Nuevo')
   },
   {
     id: 'claim-3',
@@ -101,7 +175,8 @@ export const mockClaims: Claim[] = [
     priority: 'medium',
     createdAt: new Date('2025-10-18T14:20:00'),
     updatedAt: new Date('2025-10-19T09:15:00'),
-    notes: notes.filter(n => n.claimId === 'claim-3')
+    notes: notes.filter(n => n.claimId === 'claim-3'),
+    auditHistory: createMockAuditHistory('claim-3', new Date('2025-10-18T14:20:00'), [mockUsers[2]], 'medium', 'Esperando Respuesta')
   },
   {
     id: 'claim-4',
@@ -114,7 +189,8 @@ export const mockClaims: Claim[] = [
     priority: 'medium',
     createdAt: new Date('2025-10-22T10:00:00'),
     updatedAt: new Date('2025-10-22T10:00:00'),
-    notes: []
+    notes: [],
+    auditHistory: createMockAuditHistory('claim-4', new Date('2025-10-22T10:00:00'), null, 'medium', 'Nuevo')
   },
   {
     id: 'claim-5',
@@ -127,7 +203,8 @@ export const mockClaims: Claim[] = [
     priority: 'low',
     createdAt: new Date('2025-10-17T16:45:00'),
     updatedAt: new Date('2025-10-18T16:45:00'),
-    notes: notes.filter(n => n.claimId === 'claim-5')
+    notes: notes.filter(n => n.claimId === 'claim-5'),
+    auditHistory: createMockAuditHistory('claim-5', new Date('2025-10-17T16:45:00'), [mockUsers[0]], 'low', 'Resuelto')
   },
   {
     id: 'claim-6',
@@ -140,7 +217,8 @@ export const mockClaims: Claim[] = [
     priority: 'medium',
     createdAt: new Date('2025-10-19T13:00:00'),
     updatedAt: new Date('2025-10-20T10:30:00'),
-    notes: []
+    notes: [],
+    auditHistory: createMockAuditHistory('claim-6', new Date('2025-10-19T13:00:00'), [mockUsers[1]], 'medium', 'En Proceso')
   },
   {
     id: 'claim-7',
@@ -153,7 +231,8 @@ export const mockClaims: Claim[] = [
     priority: 'low',
     createdAt: new Date('2025-10-22T08:00:00'),
     updatedAt: new Date('2025-10-22T08:00:00'),
-    notes: notes.filter(n => n.claimId === 'claim-7')
+    notes: notes.filter(n => n.claimId === 'claim-7'),
+    auditHistory: createMockAuditHistory('claim-7', new Date('2025-10-22T08:00:00'), null, 'low', 'Nuevo')
   },
   {
     id: 'claim-8',
@@ -166,7 +245,8 @@ export const mockClaims: Claim[] = [
     priority: 'high',
     createdAt: new Date('2025-10-16T09:30:00'),
     updatedAt: new Date('2025-10-18T15:00:00'),
-    notes: []
+    notes: [],
+    auditHistory: createMockAuditHistory('claim-8', new Date('2025-10-16T09:30:00'), [mockUsers[2]], 'high', 'Esperando Respuesta')
   },
   {
     id: 'claim-9',
@@ -179,7 +259,8 @@ export const mockClaims: Claim[] = [
     priority: 'urgent',
     createdAt: new Date('2025-10-19T10:15:00'),
     updatedAt: new Date('2025-10-21T09:00:00'),
-    notes: []
+    notes: [],
+    auditHistory: createMockAuditHistory('claim-9', new Date('2025-10-19T10:15:00'), [mockUsers[0]], 'urgent', 'En Proceso')
   },
   {
     id: 'claim-10',
@@ -192,7 +273,8 @@ export const mockClaims: Claim[] = [
     priority: 'low',
     createdAt: new Date('2025-10-15T11:20:00'),
     updatedAt: new Date('2025-10-16T14:30:00'),
-    notes: []
+    notes: [],
+    auditHistory: createMockAuditHistory('claim-10', new Date('2025-10-15T11:20:00'), [mockUsers[1]], 'low', 'Resuelto')
   },
   {
     id: 'claim-11',
@@ -205,7 +287,8 @@ export const mockClaims: Claim[] = [
     priority: 'medium',
     createdAt: new Date('2025-10-22T09:45:00'),
     updatedAt: new Date('2025-10-22T09:45:00'),
-    notes: []
+    notes: [],
+    auditHistory: createMockAuditHistory('claim-11', new Date('2025-10-22T09:45:00'), null, 'medium', 'Nuevo')
   },
   {
     id: 'claim-12',
@@ -214,11 +297,12 @@ export const mockClaims: Claim[] = [
     contactInfo: 'gabriela.sanchez@email.com',
     description: 'El producto llegó con el empaque visiblemente dañado y el artículo interior presenta abolladuras. Solicito reemplazo o reembolso completo.',
     status: 'Esperando Respuesta',
-    assignedTo: mockUsers[2],
+    assignedTo: [mockUsers[2]],
     priority: 'high',
     createdAt: new Date('2025-10-17T15:30:00'),
     updatedAt: new Date('2025-10-19T11:00:00'),
-    notes: []
+    notes: [],
+    auditHistory: createMockAuditHistory('claim-12', new Date('2025-10-17T15:30:00'), [mockUsers[2]], 'high', 'Esperando Respuesta')
   },
   {
     id: 'claim-13',
@@ -227,11 +311,12 @@ export const mockClaims: Claim[] = [
     contactInfo: 'ricardo.blanco@empresa.com',
     description: 'Solicité la cancelación del pedido #7834 dentro de las 2 horas posteriores a la compra, pero el producto fue enviado de todas formas.',
     status: 'En Proceso',
-    assignedTo: mockUsers[0],
+    assignedTo: [mockUsers[0]],
     priority: 'medium',
     createdAt: new Date('2025-10-20T13:00:00'),
     updatedAt: new Date('2025-10-21T10:15:00'),
-    notes: []
+    notes: [],
+    auditHistory: createMockAuditHistory('claim-13', new Date('2025-10-20T13:00:00'), [mockUsers[0]], 'medium', 'En Proceso')
   },
   {
     id: 'claim-14',
@@ -244,7 +329,8 @@ export const mockClaims: Claim[] = [
     priority: 'high',
     createdAt: new Date('2025-10-22T12:15:00'),
     updatedAt: new Date('2025-10-22T12:15:00'),
-    notes: []
+    notes: [],
+    auditHistory: createMockAuditHistory('claim-14', new Date('2025-10-22T12:15:00'), null, 'high', 'Nuevo')
   },
   {
     id: 'claim-15',
@@ -253,11 +339,12 @@ export const mockClaims: Claim[] = [
     contactInfo: 'andres.vega@email.com',
     description: 'Durante la compra había una promoción 3x2 en ciertos productos que compré, pero se me cobraron los 3 artículos al precio completo.',
     status: 'Resuelto',
-    assignedTo: mockUsers[1],
+    assignedTo: [mockUsers[1]],
     priority: 'low',
     createdAt: new Date('2025-10-14T10:00:00'),
     updatedAt: new Date('2025-10-15T16:00:00'),
-    notes: []
+    notes: [],
+    auditHistory: createMockAuditHistory('claim-15', new Date('2025-10-14T10:00:00'), [mockUsers[1]], 'low', 'Resuelto')
   },
   {
     id: 'claim-16',
@@ -266,11 +353,12 @@ export const mockClaims: Claim[] = [
     contactInfo: 'carolina.mendez@email.com',
     description: 'Intenté realizar el pago con tarjeta de crédito pero el sistema lo rechazó. Mi banco confirma que no hay problemas con la tarjeta y tienen fondos disponibles.',
     status: 'Esperando Respuesta',
-    assignedTo: mockUsers[1],
+    assignedTo: [mockUsers[1]],
     priority: 'medium',
     createdAt: new Date('2025-10-21T14:30:00'),
     updatedAt: new Date('2025-10-21T16:45:00'),
-    notes: []
+    notes: [],
+    auditHistory: createMockAuditHistory('claim-16', new Date('2025-10-21T14:30:00'), [mockUsers[1]], 'medium', 'Esperando Respuesta')
   },
   {
     id: 'claim-17',
@@ -279,11 +367,12 @@ export const mockClaims: Claim[] = [
     contactInfo: '+54 11 9012-3456',
     description: 'Necesito cambiar la dirección de entrega del pedido #9123 ya que me mudé. El pedido aún no ha sido despachado según el tracking.',
     status: 'En Proceso',
-    assignedTo: mockUsers[2],
+    assignedTo: [mockUsers[2]],
     priority: 'medium',
     createdAt: new Date('2025-10-21T09:00:00'),
     updatedAt: new Date('2025-10-21T15:30:00'),
-    notes: []
+    notes: [],
+    auditHistory: createMockAuditHistory('claim-17', new Date('2025-10-21T09:00:00'), [mockUsers[2]], 'medium', 'En Proceso')
   },
   {
     id: 'claim-18',
@@ -296,7 +385,8 @@ export const mockClaims: Claim[] = [
     priority: 'high',
     createdAt: new Date('2025-10-22T10:30:00'),
     updatedAt: new Date('2025-10-22T10:30:00'),
-    notes: []
+    notes: [],
+    auditHistory: createMockAuditHistory('claim-18', new Date('2025-10-22T10:30:00'), null, 'high', 'Nuevo')
   },
   {
     id: 'claim-19',
@@ -305,11 +395,12 @@ export const mockClaims: Claim[] = [
     contactInfo: 'pablo.ramirez@email.com',
     description: 'El número de tracking proporcionado no funciona en ningún sistema de seguimiento. Necesito información correcta sobre el estado de mi envío.',
     status: 'En Proceso',
-    assignedTo: mockUsers[0],
+    assignedTo: [mockUsers[0]],
     priority: 'low',
     createdAt: new Date('2025-10-20T11:45:00'),
     updatedAt: new Date('2025-10-21T13:00:00'),
-    notes: []
+    notes: [],
+    auditHistory: createMockAuditHistory('claim-19', new Date('2025-10-20T11:45:00'), [mockUsers[0]], 'low', 'En Proceso')
   },
   {
     id: 'claim-20',
@@ -318,8 +409,11 @@ export const mockClaims: Claim[] = [
     contactInfo: '+54 11 0123-4567',
     description: 'He intentado comunicarme por los canales oficiales durante 3 días sin recibir respuesta. Necesito resolver urgentemente un problema con mi pedido #8765.',
     status: 'Nuevo',
+    assignedTo: null,
+    priority: undefined,
     createdAt: new Date('2025-10-22T08:30:00'),
     updatedAt: new Date('2025-10-22T08:30:00'),
-    notes: []
+    notes: [],
+    auditHistory: createMockAuditHistory('claim-20', new Date('2025-10-22T08:30:00'), null, undefined, 'Nuevo')
   }
 ];

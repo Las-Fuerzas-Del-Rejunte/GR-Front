@@ -7,6 +7,31 @@ export interface StatusConfig {
   order: number;
 }
 
+export type AuditEventType = 
+  | 'created'
+  | 'status_changed'
+  | 'assigned'
+  | 'unassigned'
+  | 'reassigned'
+  | 'priority_changed'
+  | 'note_added'
+  | 'updated';
+
+export interface AuditEvent {
+  id: string;
+  claimId: string;
+  type: AuditEventType;
+  timestamp: Date;
+  user: string;
+  userId?: string;
+  details: {
+    previousValue?: any;
+    newValue?: any;
+    description?: string;
+    area?: string;
+  };
+}
+
 export interface Claim {
   id: string;
   subject: string;
@@ -19,6 +44,7 @@ export interface Claim {
   createdAt: Date;
   updatedAt: Date;
   notes: ClaimNote[];
+  auditHistory: AuditEvent[];
 }
 
 export interface ClaimNote {

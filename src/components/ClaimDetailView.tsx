@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useClaims } from '../context/ClaimsContext';
 import { useStatuses } from '../context/StatusContext';
 import { useUsers } from '../context/UsersContext';
@@ -8,7 +7,8 @@ import Badge from './ui/Badge';
 import Button from './ui/Button';
 import TextArea from './ui/TextArea';
 import Card from './ui/Card';
-import { User, Mail, Calendar, Clock, MessageSquare, ChevronDown } from 'lucide-react';
+import ClaimTimeline from './ClaimTimeline';
+import { User, Mail, Calendar, Clock, MessageSquare, ChevronDown, History } from 'lucide-react';
 
 interface ClaimDetailViewProps {
   claimId: string;
@@ -360,8 +360,20 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
 
       <Card className="p-6">
         <div className="flex items-center space-x-2 mb-6">
+          <History className="w-5 h-5 text-gray-600" />
+          <h3 className="text-lg font-semibold text-gray-900">Historial de Auditoría y Trazabilidad</h3>
+        </div>
+        <p className="text-sm text-gray-500 mb-6">
+          Seguimiento completo del recorrido del reclamo desde su creación hasta el estado actual. 
+          Se registran automáticamente todas las acciones, cambios de estado, asignaciones y áreas por las que transitó.
+        </p>
+        <ClaimTimeline events={claim.auditHistory} />
+      </Card>
+
+      <Card className="p-6">
+        <div className="flex items-center space-x-2 mb-6">
           <MessageSquare className="w-5 h-5 text-gray-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Historial y Seguimiento</h3>
+          <h3 className="text-lg font-semibold text-gray-900">Notas de Seguimiento</h3>
         </div>
 
         <div className="space-y-4 mb-6">
