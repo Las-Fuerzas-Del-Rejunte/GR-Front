@@ -112,6 +112,8 @@ const ClaimTimeline = ({ events }: ClaimTimelineProps) => {
         return 'Reclamo creado';
       case 'status_changed':
         return 'Estado actualizado';
+      case 'substatus_changed':
+        return 'Sub-estado actualizado';
       case 'assigned':
         return 'Reclamo asignado';
       case 'unassigned':
@@ -124,6 +126,12 @@ const ClaimTimeline = ({ events }: ClaimTimelineProps) => {
         return 'Nota de seguimiento agregada';
       case 'updated':
         return 'Reclamo actualizado';
+      case 'locked':
+        return '🔒 Reclamo bloqueado';
+      case 'unlocked':
+        return '🔓 Reclamo desbloqueado';
+      case 'resolution_added':
+        return '✅ Resolución agregada';
       default:
         return 'Evento registrado';
     }
@@ -169,11 +177,23 @@ const ClaimTimeline = ({ events }: ClaimTimelineProps) => {
         const curr = priorityMap[details.newValue] || details.newValue;
         return `Prioridad cambiada de "${prev}" a "${curr}"`;
       
+      case 'substatus_changed':
+        return `Sub-estado cambiado de "${details.previousValue || 'Sin sub-estado'}" a "${details.newValue}"`;
+      
       case 'note_added':
         return details.description || 'Se agregó una nota de seguimiento';
       
       case 'updated':
         return details.description || 'Información del reclamo actualizada';
+      
+      case 'locked':
+        return details.description || 'El reclamo ha sido bloqueado para preservar la auditoría';
+      
+      case 'unlocked':
+        return details.description || 'El reclamo ha sido desbloqueado para edición';
+      
+      case 'resolution_added':
+        return details.description || 'Se agregó el resumen de resolución del reclamo';
       
       default:
         return details.description || 'Evento registrado';

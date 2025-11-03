@@ -4,12 +4,14 @@ import { mockClaims } from '../data/mockData';
 
 interface ClaimsContextType {
   claims: Claim[];
-  addClaim: (claim: Omit<Claim, 'id' | 'createdAt' | 'updatedAt' | 'notes' | 'auditHistory'>) => void;
-  updateClaimStatus: (claimId: string, newStatus: ClaimStatus, user?: string) => void;
+  addClaim: (claim: Omit<Claim, 'id' | 'createdAt' | 'updatedAt' | 'notes' | 'auditHistory' | 'isLocked'>) => void;
+  updateClaimStatus: (claimId: string, newStatus: ClaimStatus, user?: string, resolutionSummary?: string) => void;
+  updateClaimSubStatus: (claimId: string, newSubStatus: string, user?: string) => void;
   addClaimNote: (claimId: string, content: string, author: string) => void;
   deleteClaim: (claimId: string) => void;
   assignClaim: (claimId: string, users: User[] | null, assignedBy?: string) => void;
   updateClaimPriority: (claimId: string, priority: 'low' | 'medium' | 'high' | 'urgent', user?: string) => void;
+  updateResolutionSummary: (claimId: string, summary: string, user?: string) => void;
   getClaimById: (claimId: string) => Claim | undefined;
   searchClaims: (query: string) => Claim[];
 }
@@ -61,7 +63,7 @@ export const ClaimsProvider = ({ children }: { children: ReactNode }) => {
     setClaims(prev => [newClaim, ...prev]);
   };
 
-  const updateClaimStatus = (claimId: string, newStatus: ClaimStatus, user: string = 'Agente de Servicio') => {
+  const updateClaimStatus = (claimId: string, newStatus: ClaimStatus, user: string = 'Agente de Servicio', resolutionSummary?: string) => {
     setClaims(prev => prev.map(claim => {
       if (claim.id === claimId) {
         const statusEvent = createAuditEvent(
@@ -75,11 +77,83 @@ export const ClaimsProvider = ({ children }: { children: ReactNode }) => {
           }
         );
 
-        return {
-          ...claim,
+        // Si el nuevo estado es "Resuelto", bloquear el reclamo
+        const isResolved = newStatus === 'Resuelto' || newStatus === 'resuelto';
+        const updates: Partial<Claim> = {
           status: newStatus,
           updatedAt: new Date(),
           auditHistory: [...claim.auditHistory, statusEvent]
+        };
+
+        if (isResolved) {
+          updates.isLocked = true;
+          updates.resolutionSummary = resolutionSummary || claim.resolutionSummary;
+          
+          // Agregar evento de bloqueo
+          const lockEvent = createAuditEvent(
+            claimId,
+            'locked',
+            user,
+            {
+              description: 'Reclamo bloqueado para preservar auditoría',
+              area: claim.assignedTo?.[0]?.department || 'Sin área'
+            }
+          );
+          updates.auditHistory = [...claim.auditHistory, statusEvent, lockEvent];
+        }
+
+        return {
+          ...claim,
+          ...updates
+        };
+      }
+      return claim;
+    }));
+  };
+
+  const updateClaimSubStatus = (claimId: string, newSubStatus: string, user: string = 'Agente de Servicio') => {
+    setClaims(prev => prev.map(claim => {
+      if (claim.id === claimId) {
+        const subStatusEvent = createAuditEvent(
+          claimId,
+          'substatus_changed',
+          user,
+          {
+            previousValue: claim.subStatus,
+            newValue: newSubStatus,
+            area: claim.assignedTo?.[0]?.department || 'Sin área'
+          }
+        );
+
+        return {
+          ...claim,
+          subStatus: newSubStatus,
+          updatedAt: new Date(),
+          auditHistory: [...claim.auditHistory, subStatusEvent]
+        };
+      }
+      return claim;
+    }));
+  };
+
+  const updateResolutionSummary = (claimId: string, summary: string, user: string = 'Agente de Servicio') => {
+    setClaims(prev => prev.map(claim => {
+      if (claim.id === claimId) {
+        const resolutionEvent = createAuditEvent(
+          claimId,
+          'resolution_added',
+          user,
+          {
+            description: 'Resumen de resolución agregado',
+            area: claim.assignedTo?.[0]?.department || 'Sin área'
+          }
+        );
+
+        return {
+          ...claim,
+          resolutionSummary: summary,
+          updatedAt: new Date(),
+          auditHistory: [...claim.auditHistory, resolutionEvent]
         };
       }
       return claim;
@@ -202,10 +276,12 @@ export const ClaimsProvider = ({ children }: { children: ReactNode }) => {
       claims,
       addClaim,
       updateClaimStatus,
+      updateClaimSubStatus,
       addClaimNote,
       deleteClaim,
       assignClaim,
       updateClaimPriority,
+      updateResolutionSummary,
       getClaimById,
       searchClaims
     }}>

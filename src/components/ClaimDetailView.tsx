@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useClaims } from '../context/ClaimsContext';
-import { useStatuses } from '../context/StatusContext';
 import { useUsers } from '../context/UsersContext';
-import { ClaimStatus } from '../types/claim';
 import Badge from './ui/Badge';
 import Button from './ui/Button';
 import TextArea from './ui/TextArea';
 import Card from './ui/Card';
 import ClaimTimeline from './ClaimTimeline';
+import StatusManager from './StatusManager';
 import { User, Mail, Calendar, Clock, MessageSquare, ChevronDown, History } from 'lucide-react';
 
 interface ClaimDetailViewProps {
@@ -15,8 +14,7 @@ interface ClaimDetailViewProps {
 }
 
 const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
-  const { getClaimById, updateClaimStatus, addClaimNote, assignClaim, updateClaimPriority } = useClaims();
-  const { statuses } = useStatuses();
+  const { getClaimById, addClaimNote, assignClaim, updateClaimPriority } = useClaims();
   const { users } = useUsers();
   const claim = getClaimById(claimId);
   const [newNote, setNewNote] = useState('');
@@ -49,30 +47,11 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
     );
   }
 
-  const handleStatusChange = (newStatus: ClaimStatus) => {
-    updateClaimStatus(claimId, newStatus);
-  };
-
   const handleAddNote = () => {
     if (!newNote.trim()) return;
 
     addClaimNote(claimId, newNote, 'Agente de Servicio');
     setNewNote('');
-  };
-
-  const getSelectedClasses = (color: string) => {
-    const map: Record<string, { border: string; bg: string; dot: string }> = {
-      blue: { border: 'border-blue-500', bg: 'bg-blue-50', dot: 'bg-blue-500' },
-      amber: { border: 'border-amber-500', bg: 'bg-amber-50', dot: 'bg-amber-500' },
-      orange: { border: 'border-orange-500', bg: 'bg-orange-50', dot: 'bg-orange-500' },
-      green: { border: 'border-emerald-500', bg: 'bg-emerald-50', dot: 'bg-emerald-500' },
-      red: { border: 'border-rose-500', bg: 'bg-rose-50', dot: 'bg-rose-500' },
-      purple: { border: 'border-purple-500', bg: 'bg-purple-50', dot: 'bg-purple-500' },
-      pink: { border: 'border-pink-500', bg: 'bg-pink-50', dot: 'bg-pink-500' },
-      teal: { border: 'border-teal-500', bg: 'bg-teal-50', dot: 'bg-teal-500' },
-      gray: { border: 'border-neutral-500', bg: 'bg-neutral-50', dot: 'bg-neutral-500' }
-    };
-    return map[color] || map.gray;
   };
 
   return (
@@ -326,31 +305,8 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
       </div>
 
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Estado del Reclamo</h3>
-        <div className="space-y-2">
-          {statuses.map(status => {
-            const isActive = claim.status === status.name;
-            const color = getSelectedClasses(status.color);
-            return (
-              <button
-                key={status.id}
-                onClick={() => handleStatusChange(status.name)}
-                className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
-                  isActive
-                    ? `${color.border} ${color.bg}`
-                    : 'border-neutral-200 hover:border-neutral-300 bg-white'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-900">{status.name}</span>
-                  {isActive && (
-                    <div className={`w-2 h-2 rounded-full ${color.dot}`} />
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Gestión de Estado y Flujo</h3>
+        <StatusManager claim={claim} />
       </Card>
 
       <Card className="p-6">
