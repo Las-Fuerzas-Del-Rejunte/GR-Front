@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Kanban, FileText, Settings, LogOut, ChevronDown, Menu, X, User } from 'lucide-react';
+import { LayoutDashboard, Kanban, FileText, Settings, LogOut, ChevronDown, Menu, X, User, BarChart3, Users, FolderOpen } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Layout = () => {
@@ -81,6 +81,45 @@ const Layout = () => {
                 >
                   <Kanban className="w-4 h-4" />
                   <span>Reclamos</span>
+                </NavLink>
+                <NavLink
+                  to="/estadisticas"
+                  className={({ isActive }) =>
+                    `relative flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                      isActive
+                        ? 'text-neutral-900 bg-neutral-100 border border-neutral-200 shadow-sm'
+                        : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
+                    }`
+                  }
+                >
+                  <BarChart3 className="w-4 h-4" />
+                  <span>Estadísticas</span>
+                </NavLink>
+                <NavLink
+                  to="/clientes"
+                  className={({ isActive }) =>
+                    `relative flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                      isActive
+                        ? 'text-neutral-900 bg-neutral-100 border border-neutral-200 shadow-sm'
+                        : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
+                    }`
+                  }
+                >
+                  <Users className="w-4 h-4" />
+                  <span>Clientes</span>
+                </NavLink>
+                <NavLink
+                  to="/proyectos"
+                  className={({ isActive }) =>
+                    `relative flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                      isActive
+                        ? 'text-neutral-900 bg-neutral-100 border border-neutral-200 shadow-sm'
+                        : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
+                    }`
+                  }
+                >
+                  <FolderOpen className="w-4 h-4" />
+                  <span>Proyectos</span>
                 </NavLink>
               </div>
 
@@ -177,6 +216,45 @@ const Layout = () => {
                 }
               >
                 Reclamos
+              </NavLink>
+              <NavLink
+                to="/estadisticas"
+                onClick={() => setShowMobileMenu(false)}
+                className={({ isActive }) =>
+                  `block px-3 py-2 rounded-md text-sm font-medium ${
+                    isActive
+                      ? 'bg-neutral-100 text-neutral-900 border border-neutral-200 shadow-sm'
+                      : 'text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900'
+                  }`
+                }
+              >
+                Estadísticas
+              </NavLink>
+              <NavLink
+                to="/clientes"
+                onClick={() => setShowMobileMenu(false)}
+                className={({ isActive }) =>
+                  `block px-3 py-2 rounded-md text-sm font-medium ${
+                    isActive
+                      ? 'bg-neutral-100 text-neutral-900 border border-neutral-200 shadow-sm'
+                      : 'text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900'
+                  }`
+                }
+              >
+                Clientes
+              </NavLink>
+              <NavLink
+                to="/proyectos"
+                onClick={() => setShowMobileMenu(false)}
+                className={({ isActive }) =>
+                  `block px-3 py-2 rounded-md text-sm font-medium ${
+                    isActive
+                      ? 'bg-neutral-100 text-neutral-900 border border-neutral-200 shadow-sm'
+                      : 'text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900'
+                  }`
+                }
+              >
+                Proyectos
               </NavLink>
               <div className="my-2 border-t border-neutral-200" />
               <button
