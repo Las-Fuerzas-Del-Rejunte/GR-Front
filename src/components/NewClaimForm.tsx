@@ -1,11 +1,13 @@
-import { useState, FormEvent, useRef, ReactNode, forwardRef, useImperativeHandle } from 'react';
+import { useState, FormEvent, useRef, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { useClaims } from '../context/ClaimsContext';
 import { useStatuses } from '../context/StatusContext';
 import Input from './ui/Input';
+import Select from './ui/Select';
 import TextArea from './ui/TextArea';
 import Button from './ui/Button';
-import { ClaimStatus } from '../types/claim';
-import { User, Mail, FileText, MessageSquare, Upload, X, Image, Video } from 'lucide-react';
+import { ClaimStatus, Project, Client } from '../types/claim';
+import { FileText, MessageSquare, Upload, X, Image, Video, Folder, Users } from 'lucide-react';
+import { projectsAPI, clientsAPI } from '../services/api';
 
 interface NewClaimFormProps {
   onClose: () => void;
@@ -21,7 +23,16 @@ const NewClaimForm = forwardRef<NewClaimFormRef, NewClaimFormProps>(({ onClose, 
   const { addClaim } = useClaims();
   const { statuses } = useStatuses();
   const formRef = useRef<HTMLFormElement>(null);
+  
+  // Estados para clientes y proyectos
+  const [clients, setClients] = useState<Client[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loadingClients, setLoadingClients] = useState(false);
+  const [loadingProjects, setLoadingProjects] = useState(false);
+  
   const [formData, setFormData] = useState({
+    clientId: '',
+    projectId: '',
     customerName: '',
     contactInfo: '',
     subject: '',
@@ -29,6 +40,8 @@ const NewClaimForm = forwardRef<NewClaimFormRef, NewClaimFormProps>(({ onClose, 
   });
 
   const [errors, setErrors] = useState({
+    clientId: '',
+    projectId: '',
     customerName: '',
     contactInfo: '',
     subject: '',
@@ -38,8 +51,63 @@ const NewClaimForm = forwardRef<NewClaimFormRef, NewClaimFormProps>(({ onClose, 
   const [attachments, setAttachments] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Cargar clientes al montar el componente
+  useEffect(() => {
+    const fetchClients = async () => {
+      setLoadingClients(true);
+      try {
+        const data = await clientsAPI.getAll();
+        setClients(data);
+      } catch (error) {
+        console.error('Error al cargar clientes:', error);
+      } finally {
+        setLoadingClients(false);
+      }
+    };
+    
+    fetchClients();
+  }, []);
+
+  // Cargar proyectos cuando se selecciona un cliente
+  useEffect(() => {
+    const fetchProjects = async () => {
+      if (!formData.clientId) {
+        setProjects([]);
+        return;
+      }
+
+      setLoadingProjects(true);
+      try {
+        const data = await projectsAPI.getByClientId(formData.clientId);
+        setProjects(data);
+      } catch (error) {
+        console.error('Error al cargar proyectos:', error);
+      } finally {
+        setLoadingProjects(false);
+      }
+    };
+
+    fetchProjects();
+  }, [formData.clientId]);
+
+  // Actualizar customerName y contactInfo cuando se selecciona un proyecto
+  useEffect(() => {
+    if (formData.projectId && projects.length > 0) {
+      const selectedProject = projects.find(p => p.id === formData.projectId);
+      if (selectedProject) {
+        setFormData(prev => ({
+          ...prev,
+          customerName: selectedProject.client.fullName,
+          contactInfo: selectedProject.client.email || selectedProject.client.phone || '',
+        }));
+      }
+    }
+  }, [formData.projectId, projects]);
+
   const validateForm = () => {
     const newErrors = {
+      clientId: '',
+      projectId: '',
       customerName: '',
       contactInfo: '',
       subject: '',
@@ -48,13 +116,13 @@ const NewClaimForm = forwardRef<NewClaimFormRef, NewClaimFormProps>(({ onClose, 
 
     let isValid = true;
 
-    if (!formData.customerName.trim()) {
-      newErrors.customerName = 'El nombre del cliente es requerido';
+    if (!formData.clientId) {
+      newErrors.clientId = 'El cliente es requerido';
       isValid = false;
     }
 
-    if (!formData.contactInfo.trim()) {
-      newErrors.contactInfo = 'La información de contacto es requerida';
+    if (!formData.projectId) {
+      newErrors.projectId = 'El proyecto es requerido';
       isValid = false;
     }
 
@@ -93,13 +161,13 @@ const NewClaimForm = forwardRef<NewClaimFormRef, NewClaimFormProps>(({ onClose, 
 
     const status: ClaimStatus = initialStatus || statuses[0]?.name || 'Nuevo';
     addClaim({
-      ...formData,
+      subject: formData.subject,
+      customerName: formData.customerName,
+      contactInfo: formData.contactInfo,
+      description: formData.description,
+      projectId: formData.projectId,
+      clientId: formData.clientId,
       status,
-      attachments: attachments.map(file => ({
-        name: file.name,
-        type: file.type,
-        size: file.size
-      }))
     });
 
     onSuccess();
@@ -117,24 +185,38 @@ const NewClaimForm = forwardRef<NewClaimFormRef, NewClaimFormProps>(({ onClose, 
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-      <Input
-        label="Nombre del Cliente"
-        placeholder="Ingrese el nombre completo"
-        value={formData.customerName}
-        onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-        error={errors.customerName}
+      {/* Selector de Cliente */}
+      <Select
+        label="Cliente"
+        value={formData.clientId}
+        onChange={(e) => {
+          setFormData({ ...formData, clientId: e.target.value, projectId: '', customerName: '', contactInfo: '' });
+        }}
+        options={clients.map(client => ({ value: client.id, label: client.fullName }))}
+        placeholder={loadingClients ? "Cargando clientes..." : "Seleccione un cliente"}
+        error={errors.clientId}
         required
-        icon={<User className="w-4 h-4" />}
+        disabled={loadingClients}
+        icon={<Users className="w-4 h-4" />}
       />
 
-      <Input
-        label="Información de Contacto"
-        placeholder="Email o teléfono"
-        value={formData.contactInfo}
-        onChange={(e) => setFormData({ ...formData, contactInfo: e.target.value })}
-        error={errors.contactInfo}
+      {/* Selector de Proyecto */}
+      <Select
+        label="Proyecto"
+        value={formData.projectId}
+        onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
+        options={projects.map(project => ({ value: project.id, label: project.name }))}
+        placeholder={
+          !formData.clientId 
+            ? "Primero seleccione un cliente" 
+            : loadingProjects 
+            ? "Cargando proyectos..." 
+            : "Seleccione un proyecto"
+        }
+        error={errors.projectId}
         required
-        icon={<Mail className="w-4 h-4" />}
+        disabled={!formData.clientId || loadingProjects}
+        icon={<Folder className="w-4 h-4" />}
       />
 
       <Input

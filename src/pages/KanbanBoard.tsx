@@ -5,6 +5,7 @@ import { useStatuses } from '../context/StatusContext';
 import { ClaimStatus } from '../types/claim';
 import KanbanCard from '../components/KanbanCard';
 import Button from '../components/ui/Button';
+import { SkeletonCard } from '../components/ui/SkeletonCard';
 import { Search, Filter, ChevronDown, Plus } from 'lucide-react';
 
 interface KanbanBoardProps {
@@ -14,7 +15,7 @@ interface KanbanBoardProps {
 }
 
 const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail, onCreateClaimWithStatus }: KanbanBoardProps) => {
-  const { claims, updateClaimStatus, searchClaims } = useClaims();
+  const { claims, updateClaimStatus, searchClaims, loading, isUpdating } = useClaims();
   const { statuses, reorderStatuses } = useStatuses();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatuses, setSelectedStatuses] = useState<ClaimStatus[]>([]);
@@ -36,13 +37,22 @@ const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail, onCreateClaimWithStatu
   const claimsByStatus = useMemo(() => {
     const grouped: Record<string, typeof claims> = {};
 
+    // Inicializar grupos por nombre de estado
     statuses.forEach(status => {
       grouped[status.name] = [];
     });
 
+    // Crear un mapa de UUID → nombre de estado
+    const statusIdToName = new Map<string, string>();
+    statuses.forEach(status => {
+      statusIdToName.set(status.id, status.name);
+    });
+
+    // Agrupar claims por estado usando el UUID para buscar el nombre
     filteredClaims.forEach(claim => {
-      if (grouped[claim.status]) {
-        grouped[claim.status].push(claim);
+      const statusName = statusIdToName.get(claim.status);
+      if (statusName && grouped[statusName]) {
+        grouped[statusName].push(claim);
       }
     });
 
@@ -79,8 +89,15 @@ const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail, onCreateClaimWithStatu
     }
 
     // Si estamos arrastrando una tarjeta
-    const newStatus = destination.droppableId as ClaimStatus;
-    updateClaimStatus(draggableId, newStatus);
+    // destination.droppableId contiene el nombre del estado
+    // Necesitamos encontrar el UUID del estado
+    const statusName = destination.droppableId;
+    const targetStatus = statuses.find(s => s.name === statusName);
+    
+    if (targetStatus) {
+      // updateClaimStatus espera el UUID del estado
+      updateClaimStatus(draggableId, targetStatus.id as ClaimStatus);
+    }
   };
 
   const getColumnColors = (color: string) => {
@@ -156,9 +173,17 @@ const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail, onCreateClaimWithStatu
 
   return (
     <div className="space-y-6">
+      {/* Overlay sutil cuando se está actualizando */}
+      {isUpdating && (
+        <div className="fixed top-20 right-6 z-50 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in">
+          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-sm font-medium">Actualizando...</span>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Vista de Reclamos</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Reclamos</h1>
           <p className="text-sm text-gray-600 mt-1">Tablero Kanban interactivo</p>
         </div>
         <Button onClick={onOpenNewClaim} size="lg">
@@ -272,7 +297,11 @@ const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail, onCreateClaimWithStatu
                               {...provided.droppableProps}
                               className={`flex-1 bg-gradient-to-b from-white via-neutral-50/30 to-white rounded-b-lg p-4 space-y-3 min-h-[500px] transition-all duration-200 ${snapshot.isDraggingOver ? 'bg-gradient-to-b from-blue-50/50 via-blue-100/40 to-blue-50/50' : ''}`}
                             >
-                              {(claimsByStatus[status.name] || []).map((claim, index) => {
+                              {/* Mostrar skeletons mientras está cargando */}
+                              {loading && <SkeletonCard count={2} />}
+                              
+                              {/* Mostrar claims cuando ya están cargados */}
+                              {!loading && (claimsByStatus[status.name] || []).map((claim, index) => {
                                 const showPlaceholderBefore = dragDestination 
                                   && dragDestination.droppableId === status.name 
                                   && dragDestination.index === index 
@@ -305,21 +334,23 @@ const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail, onCreateClaimWithStatu
                               })}
                               
                               {/* Mostrar preview al final si el destino es la última posición */}
-                              {dragDestination 
+                              {!loading && dragDestination 
                                 && dragDestination.droppableId === status.name 
                                 && dragDestination.index === (claimsByStatus[status.name] || []).length
                                 && draggedClaimId && (
                                   <DropPreview />
                                 )}
                               
-                              {/* Botón para agregar nuevo reclamo */}
-                              <button
-                                onClick={() => onCreateClaimWithStatus ? onCreateClaimWithStatus(status.name) : onOpenNewClaim()}
-                                className="w-full mt-2 p-3 rounded-lg border-2 border-dashed border-neutral-300 hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-200 flex items-center justify-center gap-2 text-neutral-600 hover:text-blue-600 group"
-                              >
-                                <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                                <span className="text-sm font-medium">Agregar reclamo</span>
-                              </button>
+                              {/* Botón para agregar nuevo reclamo - solo visible cuando no está cargando */}
+                              {!loading && (
+                                <button
+                                  onClick={() => onCreateClaimWithStatus ? onCreateClaimWithStatus(status.name) : onOpenNewClaim()}
+                                  className="w-full mt-2 p-3 rounded-lg border-2 border-dashed border-neutral-300 hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-200 flex items-center justify-center gap-2 text-neutral-600 hover:text-blue-600 group"
+                                >
+                                  <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                  <span className="text-sm font-medium">Agregar reclamo</span>
+                                </button>
+                              )}
                             </div>
                           )}
                         </Droppable>

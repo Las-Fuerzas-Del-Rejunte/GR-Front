@@ -1,28 +1,54 @@
 import { useEffect, useRef, useState } from 'react';
 import { useClaims } from '../context/ClaimsContext';
 import { useUsers } from '../context/UsersContext';
+import { AuditEvent } from '../types/claim';
+import { claimsAPI } from '../services/api';
 import Badge from './ui/Badge';
 import Button from './ui/Button';
 import TextArea from './ui/TextArea';
 import Card from './ui/Card';
 import ClaimTimeline from './ClaimTimeline';
 import StatusManager from './StatusManager';
-import { User, Mail, Calendar, Clock, MessageSquare, ChevronDown, History } from 'lucide-react';
+import { User, Mail, Calendar, Clock, MessageSquare, ChevronDown, History, Loader2 } from 'lucide-react';
 
 interface ClaimDetailViewProps {
   claimId: string;
 }
 
 const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
-  const { getClaimById, addClaimNote, assignClaim, updateClaimPriority } = useClaims();
+  const { getClaimById, addClaimNote, assignClaim, updateClaimPriority, isUpdating } = useClaims();
   const { users } = useUsers();
   const claim = getClaimById(claimId);
   const [newNote, setNewNote] = useState('');
   const [showAssignMenu, setShowAssignMenu] = useState(false);
   const [showPriorityMenu, setShowPriorityMenu] = useState(false);
   const [assignQuery, setAssignQuery] = useState('');
+  const [auditHistory, setAuditHistory] = useState<AuditEvent[]>([]);
+  const [loadingAudit, setLoadingAudit] = useState(false);
   const assignMenuRef = useRef<HTMLDivElement | null>(null);
   const priorityMenuRef = useRef<HTMLDivElement | null>(null);
+
+  // Función para cargar historial de auditoría
+  const loadAuditHistory = async () => {
+    if (!claimId) return;
+    
+    setLoadingAudit(true);
+    try {
+      const history = await claimsAPI.getAuditHistory(claimId);
+      setAuditHistory(history);
+    } catch (error) {
+      console.error('Error loading audit history:', error);
+      setAuditHistory([]);
+    } finally {
+      setLoadingAudit(false);
+    }
+  };
+
+  // Cargar historial de auditoría cuando cambia el claim o su updatedAt
+  useEffect(() => {
+    loadAuditHistory();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [claimId, claim?.updatedAt]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -60,7 +86,7 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
         <div>
           <div className="flex items-center space-x-3 mb-2">
             <span className="text-sm font-mono text-gray-500">{claim.id}</span>
-            <Badge status={claim.status} />
+            <Badge status={claim.status} statusName={claim.statusName} statusColor={claim.statusColor} />
           </div>
           <h2 className="text-2xl font-bold text-gray-900">{claim.subject}</h2>
         </div>
@@ -132,13 +158,19 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
                     if (!next) setAssignQuery('');
                     setShowPriorityMenu(false);
                   }}
-                  className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-200 text-left flex items-center justify-between group"
+                  disabled={isUpdating}
+                  className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-200 text-left flex items-center justify-between group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {claim.assignedTo && claim.assignedTo.length > 0 ? (
+                  {isUpdating ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                      <span className="text-sm font-medium text-gray-600">Actualizando...</span>
+                    </div>
+                  ) : claim.assignedTo && claim.assignedTo.length > 0 ? (
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
                         <span className="text-xs font-bold text-white">
-                          {claim.assignedTo[0].name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                          {claim.assignedTo[0].name ? claim.assignedTo[0].name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '??'}
                         </span>
                       </div>
                       <div className="min-w-0 flex-1">
@@ -202,11 +234,11 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
                             >
                               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
                                 <span className="text-xs font-bold text-white">
-                                  {user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                                  {user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '??'}
                                 </span>
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-gray-900">{user.name}</p>
+                                <p className="text-sm font-semibold text-gray-900">{user.name || 'Usuario sin nombre'}</p>
                                 {user.position && (
                                   <p className="text-xs text-gray-600">{user.position}</p>
                                 )}
@@ -304,7 +336,7 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
         </Card>
       </div>
 
-      <Card className="p-6">
+      <Card className="p-6 relative z-20">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Gestión de Estado y Flujo</h3>
         <StatusManager claim={claim} />
       </Card>
@@ -323,7 +355,14 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
           Seguimiento completo del recorrido del reclamo desde su creación hasta el estado actual. 
           Se registran automáticamente todas las acciones, cambios de estado, asignaciones y áreas por las que transitó.
         </p>
-        <ClaimTimeline events={claim.auditHistory} />
+        {loadingAudit ? (
+          <div className="text-center py-8">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <p className="text-sm text-gray-500 mt-2">Cargando historial...</p>
+          </div>
+        ) : (
+          <ClaimTimeline events={auditHistory} />
+        )}
       </Card>
 
       <Card className="p-6">

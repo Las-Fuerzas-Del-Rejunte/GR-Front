@@ -1,0 +1,326 @@
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { Claim, ClaimNote, ClaimStatus, User } from '../types/claim';
+import { claimsAPI, handleAPIError } from '../services/api';
+import { useToast } from './ToastContext';
+
+interface ClaimsContextType {
+  claims: Claim[];
+  loading: boolean;
+  addClaim: (claim: Omit<Claim, 'id' | 'createdAt' | 'updatedAt' | 'notes' | 'auditHistory' | 'isLocked'>) => Promise<void>;
+  updateClaimStatus: (claimId: string, newStatus: ClaimStatus, user?: string, resolutionSummary?: string) => Promise<void>;
+  updateClaimSubStatus: (claimId: string, newSubStatus: string, user?: string) => Promise<void>;
+  addClaimNote: (claimId: string, content: string, author: string) => void;
+  deleteClaim: (claimId: string) => Promise<void>;
+  assignClaim: (claimId: string, users: User[] | null, assignedBy?: string) => Promise<void>;
+  updateClaimPriority: (claimId: string, priority: 'low' | 'medium' | 'high' | 'urgent', user?: string) => Promise<void>;
+  updateResolutionSummary: (claimId: string, summary: string, user?: string) => Promise<void>;
+  getClaimById: (claimId: string) => Claim | undefined;
+  searchClaims: (query: string) => Claim[];
+  refreshClaims: () => Promise<void>;
+}
+
+const ClaimsContext = createContext<ClaimsContextType | undefined>(undefined);
+
+export const ClaimsProvider = ({ children }: { children: ReactNode }) => {
+  const [claims, setClaims] = useState<Claim[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
+
+  // Cargar reclamos al iniciar
+  const refreshClaims = async () => {
+    setLoading(true);
+    try {
+      const data = await claimsAPI.getAll();
+      setClaims(data);
+    } catch (error) {
+      console.error('Error loading claims:', error);
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: 'No se pudieron cargar los reclamos'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshClaims();
+  }, []);
+
+  // Función auxiliar para crear eventos de auditoría
+  const createAuditEvent = (
+    claimId: string,
+    type: AuditEvent['type'],
+    user: string,
+    details: AuditEvent['details']
+  ): AuditEvent => {
+    return {
+      id: `audit-${Date.now()}-${Math.random()}`,
+      claimId,
+      type,
+      timestamp: new Date(),
+      user,
+      details
+    };
+  };
+
+  const addClaim = (claimData: Omit<Claim, 'id' | 'createdAt' | 'updatedAt' | 'notes' | 'auditHistory'>) => {
+    const now = new Date();
+    const newClaimId = `claim-${Date.now()}`;
+    
+    const creationEvent = createAuditEvent(
+      newClaimId,
+      'created',
+      'Sistema',
+      {
+        description: 'Reclamo creado en el sistema',
+        area: claimData.assignedTo?.[0]?.department || 'Sin área'
+      }
+    );
+
+    const newClaim: Claim = {
+      ...claimData,
+      id: newClaimId,
+      createdAt: now,
+      updatedAt: now,
+      notes: [],
+      auditHistory: [creationEvent]
+    };
+    setClaims(prev => [newClaim, ...prev]);
+  };
+
+  const updateClaimStatus = (claimId: string, newStatus: ClaimStatus, user: string = 'Agente de Servicio', resolutionSummary?: string) => {
+    setClaims(prev => prev.map(claim => {
+      if (claim.id === claimId) {
+        const statusEvent = createAuditEvent(
+          claimId,
+          'status_changed',
+          user,
+          {
+            previousValue: claim.status,
+            newValue: newStatus,
+            area: claim.assignedTo?.[0]?.department || 'Sin área'
+          }
+        );
+
+        // Si el nuevo estado es "Resuelto", bloquear el reclamo
+        const isResolved = newStatus === 'Resuelto' || newStatus === 'resuelto';
+        const updates: Partial<Claim> = {
+          status: newStatus,
+          updatedAt: new Date(),
+          auditHistory: [...claim.auditHistory, statusEvent]
+        };
+
+        if (isResolved) {
+          updates.isLocked = true;
+          updates.resolutionSummary = resolutionSummary || claim.resolutionSummary;
+          
+          // Agregar evento de bloqueo
+          const lockEvent = createAuditEvent(
+            claimId,
+            'locked',
+            user,
+            {
+              description: 'Reclamo bloqueado para preservar auditoría',
+              area: claim.assignedTo?.[0]?.department || 'Sin área'
+            }
+          );
+          updates.auditHistory = [...claim.auditHistory, statusEvent, lockEvent];
+        }
+
+        return {
+          ...claim,
+          ...updates
+        };
+      }
+      return claim;
+    }));
+  };
+
+  const updateClaimSubStatus = (claimId: string, newSubStatus: string, user: string = 'Agente de Servicio') => {
+    setClaims(prev => prev.map(claim => {
+      if (claim.id === claimId) {
+        const subStatusEvent = createAuditEvent(
+          claimId,
+          'substatus_changed',
+          user,
+          {
+            previousValue: claim.subStatus,
+            newValue: newSubStatus,
+            area: claim.assignedTo?.[0]?.department || 'Sin área'
+          }
+        );
+
+        return {
+          ...claim,
+          subStatus: newSubStatus,
+          updatedAt: new Date(),
+          auditHistory: [...claim.auditHistory, subStatusEvent]
+        };
+      }
+      return claim;
+    }));
+  };
+
+  const updateResolutionSummary = (claimId: string, summary: string, user: string = 'Agente de Servicio') => {
+    setClaims(prev => prev.map(claim => {
+      if (claim.id === claimId) {
+        const resolutionEvent = createAuditEvent(
+          claimId,
+          'resolution_added',
+          user,
+          {
+            description: 'Resumen de resolución agregado',
+            area: claim.assignedTo?.[0]?.department || 'Sin área'
+          }
+        );
+
+        return {
+          ...claim,
+          resolutionSummary: summary,
+          updatedAt: new Date(),
+          auditHistory: [...claim.auditHistory, resolutionEvent]
+        };
+      }
+      return claim;
+    }));
+  };
+
+  const addClaimNote = (claimId: string, content: string, author: string) => {
+    const newNote: ClaimNote = {
+      id: `note-${Date.now()}`,
+      claimId,
+      content,
+      author,
+      createdAt: new Date()
+    };
+
+    setClaims(prev => prev.map(claim => {
+      if (claim.id === claimId) {
+        const noteEvent = createAuditEvent(
+          claimId,
+          'note_added',
+          author,
+          {
+            description: content.length > 50 ? `${content.substring(0, 50)}...` : content,
+            area: claim.assignedTo?.[0]?.department || 'Sin área'
+          }
+        );
+
+        return {
+          ...claim,
+          notes: [...claim.notes, newNote],
+          updatedAt: new Date(),
+          auditHistory: [...claim.auditHistory, noteEvent]
+        };
+      }
+      return claim;
+    }));
+  };
+
+  const deleteClaim = (claimId: string) => {
+    setClaims(prev => prev.filter(claim => claim.id !== claimId));
+  };
+
+  const assignClaim = (claimId: string, users: User[] | null, assignedBy: string = 'Supervisor') => {
+    setClaims(prev => prev.map(claim => {
+      if (claim.id === claimId) {
+        const previousAssigned = claim.assignedTo;
+        let eventType: AuditEvent['type'] = 'assigned';
+        
+        if (!users || users.length === 0) {
+          eventType = 'unassigned';
+        } else if (previousAssigned && previousAssigned.length > 0) {
+          eventType = 'reassigned';
+        }
+
+        const assignEvent = createAuditEvent(
+          claimId,
+          eventType,
+          assignedBy,
+          {
+            previousValue: previousAssigned,
+            newValue: users,
+            area: users?.[0]?.department || 'Sin área'
+          }
+        );
+
+        return {
+          ...claim,
+          assignedTo: users,
+          updatedAt: new Date(),
+          auditHistory: [...claim.auditHistory, assignEvent]
+        };
+      }
+      return claim;
+    }));
+  };
+
+  const updateClaimPriority = (claimId: string, priority: 'low' | 'medium' | 'high' | 'urgent', user: string = 'Agente de Servicio') => {
+    setClaims(prev => prev.map(claim => {
+      if (claim.id === claimId) {
+        const priorityEvent = createAuditEvent(
+          claimId,
+          'priority_changed',
+          user,
+          {
+            previousValue: claim.priority,
+            newValue: priority,
+            area: claim.assignedTo?.[0]?.department || 'Sin área'
+          }
+        );
+
+        return {
+          ...claim,
+          priority,
+          updatedAt: new Date(),
+          auditHistory: [...claim.auditHistory, priorityEvent]
+        };
+      }
+      return claim;
+    }));
+  };
+
+  const getClaimById = (claimId: string) => {
+    return claims.find(claim => claim.id === claimId);
+  };
+
+  const searchClaims = (query: string) => {
+    if (!query.trim()) return claims;
+
+    const lowerQuery = query.toLowerCase();
+    return claims.filter(claim =>
+      claim.id.toLowerCase().includes(lowerQuery) ||
+      claim.subject.toLowerCase().includes(lowerQuery) ||
+      claim.customerName.toLowerCase().includes(lowerQuery) ||
+      claim.description.toLowerCase().includes(lowerQuery)
+    );
+  };
+
+  return (
+    <ClaimsContext.Provider value={{
+      claims,
+      addClaim,
+      updateClaimStatus,
+      updateClaimSubStatus,
+      addClaimNote,
+      deleteClaim,
+      assignClaim,
+      updateClaimPriority,
+      updateResolutionSummary,
+      getClaimById,
+      searchClaims
+    }}>
+      {children}
+    </ClaimsContext.Provider>
+  );
+};
+
+export const useClaims = () => {
+  const context = useContext(ClaimsContext);
+  if (!context) {
+    throw new Error('useClaims must be used within a ClaimsProvider');
+  }
+  return context;
+};

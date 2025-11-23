@@ -140,12 +140,20 @@ const ClaimTimeline = ({ events }: ClaimTimelineProps) => {
   const getEventDescription = (event: AuditEvent): string => {
     const { details } = event;
     
+    // Si el backend proporciona una descripción, usarla directamente
+    if (details.description) {
+      return details.description;
+    }
+    
+    // Fallback a las descripciones generadas manualmente
     switch (event.type) {
       case 'created':
         return `Reclamo iniciado por ${event.user}`;
       
       case 'status_changed':
-        return `Estado cambiado de "${details.previousValue}" a "${details.newValue}"`;
+        const prevStatus = typeof details.previousValue === 'string' ? details.previousValue : 'Sin estado';
+        const newStatus = typeof details.newValue === 'string' ? details.newValue : 'Nuevo estado';
+        return `Estado cambiado de "${prevStatus}" a "${newStatus}"`;
       
       case 'assigned':
         if (Array.isArray(details.newValue)) {

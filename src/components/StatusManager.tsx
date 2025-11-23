@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, AlertCircle, Lock, Info } from 'lucide-react';
+import { ChevronDown, AlertCircle, Lock, Info, Loader2 } from 'lucide-react';
 import { useStatuses } from '../context/StatusContext';
 import { useClaims } from '../context/ClaimsContext';
 import { Claim } from '../types/claim';
@@ -12,8 +12,8 @@ interface StatusManagerProps {
 }
 
 const StatusManager = ({ claim }: StatusManagerProps) => {
-  const { getStatusConfig, getSubStatuses, canPerformAction, getAvailableTransitions } = useStatuses();
-  const { updateClaimStatus, updateClaimSubStatus } = useClaims();
+  const { getStatusConfig, getSubStatuses, canPerformAction, getAvailableTransitions, loadSubStatuses } = useStatuses();
+  const { updateClaimStatus, updateClaimSubStatus, isUpdating } = useClaims();
   
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [showSubStatusMenu, setShowSubStatusMenu] = useState(false);
@@ -24,9 +24,42 @@ const StatusManager = ({ claim }: StatusManagerProps) => {
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const subStatusMenuRef = useRef<HTMLDivElement | null>(null);
 
-  const currentStatusConfig = getStatusConfig(claim.status);
-  const currentSubStatuses = getSubStatuses(claim.status);
-  const availableTransitions = getAvailableTransitions(claim.status, 'agent'); // TODO: obtener role del usuario actual
+  // Usar statusName si está disponible, sino usar status (UUID)
+  const statusKey = claim.statusName || claim.status;
+  const currentStatusConfig = getStatusConfig(statusKey);
+  const currentSubStatuses = getSubStatuses(claim.status); // ✅ Usar UUID directamente
+  const availableTransitions = getAvailableTransitions(statusKey, 'agent'); // TODO: obtener role del usuario actual
+
+  // 🐛 DEBUG: Verificar qué retorna getSubStatuses
+  console.log('🔍 Verificando getSubStatuses:', {
+    claimStatus: claim.status.substring(0, 8),
+    claimStatusName: claim.statusName,
+    currentSubStatuses_length: currentSubStatuses.length,
+    currentSubStatuses_ids: currentSubStatuses.map(s => s.id.substring(0, 8))
+  });
+
+  // Cargar sub-estados desde el backend cuando se monta o cambia el estado
+  useEffect(() => {
+    if (claim.status) {
+      console.log('🔄 StatusManager - Cargando sub-estados para:', claim.status.substring(0, 8));
+      loadSubStatuses(claim.status);
+    }
+  }, [claim.status]); // ✅ Removido loadSubStatuses de dependencias
+
+  // Log para debug: mostrar sub-estados disponibles (solo cuando cambian)
+  useEffect(() => {
+    if (currentSubStatuses.length > 0) {
+      const selected = currentSubStatuses.find(s => s.id === claim.subStatus);
+      console.log('🎯 Sub-estados disponibles:', {
+        claimStatus: claim.status.substring(0, 8),
+        claimStatusName: claim.statusName,
+        totalSubStatuses: currentSubStatuses.length,
+        subStatusList: currentSubStatuses.map(s => ({ id: s.id.substring(0, 8), name: s.name })),
+        claimSubStatus: claim.subStatus?.substring(0, 8) || 'null',
+        selectedSubStatus: selected?.name || '❌ NO ENCONTRADO'
+      });
+    }
+  }, [currentSubStatuses.length, claim.subStatus]); // ✅ Solo cuando cambia la cantidad o el subStatus
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -96,7 +129,7 @@ const StatusManager = ({ claim }: StatusManagerProps) => {
     return map[color] || map.gray;
   };
 
-  const canChangeStatus = canPerformAction(claim.status, 'canChangeStatus');
+  const canChangeStatus = canPerformAction(statusKey, 'canChangeStatus');
   const isLocked = claim.isLocked || currentStatusConfig?.permissions.isLocked;
 
   return (
@@ -142,7 +175,7 @@ const StatusManager = ({ claim }: StatusManagerProps) => {
             >
               <div className="flex items-center gap-2">
                 <div className={`w-3 h-3 rounded-full ${getSelectedClasses(currentStatusConfig?.color || 'gray').dot}`} />
-                <span className="font-semibold text-gray-900">{claim.status}</span>
+                <span className="font-semibold text-gray-900">{claim.statusName || claim.status}</span>
               </div>
               <ChevronDown className={`w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-all duration-200 ${showStatusMenu ? 'rotate-180' : ''}`} />
             </button>
@@ -197,7 +230,7 @@ const StatusManager = ({ claim }: StatusManagerProps) => {
           <div className={`w-full px-4 py-3 border-2 rounded-lg ${getSelectedClasses(currentStatusConfig?.color || 'gray').border} ${getSelectedClasses(currentStatusConfig?.color || 'gray').bg}`}>
             <div className="flex items-center gap-2">
               <div className={`w-3 h-3 rounded-full ${getSelectedClasses(currentStatusConfig?.color || 'gray').dot}`} />
-              <span className="font-semibold text-gray-900">{claim.status}</span>
+              <span className="font-semibold text-gray-900">{claim.statusName || claim.status}</span>
             </div>
           </div>
         )}
@@ -205,23 +238,46 @@ const StatusManager = ({ claim }: StatusManagerProps) => {
 
       {/* Selector de Sub-Estado */}
       {currentSubStatuses.length > 0 && !isLocked && (
-        <div>
+        <div className="relative z-10">
           <label className="text-sm font-semibold text-gray-700 mb-2 block">
             Progreso Interno (Sub-Estado)
           </label>
           <div className="relative">
             <button
               onClick={() => setShowSubStatusMenu(!showSubStatusMenu)}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-purple-400 hover:bg-purple-50/30 transition-all duration-200 text-left flex items-center justify-between group"
+              disabled={isUpdating}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-purple-400 hover:bg-purple-50/30 transition-all duration-200 text-left flex items-center justify-between group disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span className="font-medium text-gray-900">
-                {claim.subStatus ? currentSubStatuses.find(s => s.id === claim.subStatus)?.name : 'Seleccionar progreso...'}
-              </span>
+              {isUpdating ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
+                  <span className="font-medium text-gray-600">Actualizando...</span>
+                </div>
+              ) : (
+                <span className="font-medium text-gray-900">
+                  {(() => {
+                    if (!claim.subStatus) return 'Seleccionar progreso...';
+                    
+                    const selected = currentSubStatuses.find(s => s.id === claim.subStatus);
+                    
+                    // Debug log
+                    if (!selected) {
+                      console.warn('⚠️ Sub-estado no encontrado en lista:', {
+                        claimSubStatus: claim.subStatus?.substring(0, 8),
+                        availableIds: currentSubStatuses.map(s => s.id.substring(0, 8)),
+                        availableNames: currentSubStatuses.map(s => s.name)
+                      });
+                    }
+                    
+                    return selected?.name || 'Seleccionar progreso...';
+                  })()}
+                </span>
+              )}
               <ChevronDown className={`w-4 h-4 text-gray-400 group-hover:text-purple-600 transition-all duration-200 ${showSubStatusMenu ? 'rotate-180' : ''}`} />
             </button>
 
             {showSubStatusMenu && (
-              <div ref={subStatusMenuRef} className="absolute z-50 mt-2 w-full bg-white rounded-lg shadow-2xl border border-gray-200">
+              <div ref={subStatusMenuRef} className="absolute z-[9999] mt-2 w-full bg-white rounded-lg shadow-2xl border border-gray-200 max-h-64 overflow-y-auto">
                 <div className="p-2 space-y-1">
                   {currentSubStatuses.map(subStatus => {
                     const isActive = claim.subStatus === subStatus.id;

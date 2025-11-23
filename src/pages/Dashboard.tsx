@@ -215,7 +215,7 @@ function RecentClaimCard({ claim, index }: { claim: Claim; index: number }) {
           <span className="text-xs font-mono text-neutral-500 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 px-2 py-0.5 rounded animate-pulse">
             {claim.id}
           </span>
-          <Badge status={claim.status} />
+          <Badge status={claim.status} statusName={claim.statusName} statusColor={claim.statusColor} />
         </div>
         <p className="text-sm font-medium text-neutral-900 truncate">{claim.customerName}</p>
         <div className="flex items-center gap-1 mt-0.5">

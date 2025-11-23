@@ -14,7 +14,7 @@ const KanbanPage = () => {
   const [initialStatus, setInitialStatus] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const formRef = useRef<NewClaimFormRef>(null);
-  const { deleteClaim } = useClaims();
+  const { deleteClaim, isCreating, isDeleting } = useClaims();
   const { showToast } = useToast();
 
   const handleCloseNewClaim = () => {
@@ -58,10 +58,10 @@ const KanbanPage = () => {
 
   const newClaimFooter = (
     <div className="flex justify-end gap-3">
-      <Button variant="secondary" onClick={handleCloseNewClaim}>
+      <Button variant="secondary" onClick={handleCloseNewClaim} disabled={isCreating}>
         Cancelar
       </Button>
-      <Button onClick={handleSubmitForm}>
+      <Button onClick={handleSubmitForm} loading={isCreating}>
         Guardar Reclamo
       </Button>
     </div>
@@ -122,10 +122,10 @@ const KanbanPage = () => {
         title="Eliminar Reclamo"
         footer={
           <div className="flex justify-end gap-3">
-            <Button variant="secondary" onClick={() => setIsDeleteModalOpen(false)}>
+            <Button variant="secondary" onClick={() => setIsDeleteModalOpen(false)} disabled={isDeleting}>
               Cancelar
             </Button>
-            <Button onClick={handleDeleteClaim} style={{ backgroundColor: '#ef4444', color: 'white', borderColor: '#ef4444' }}>
+            <Button onClick={handleDeleteClaim} loading={isDeleting} style={{ backgroundColor: '#ef4444', color: 'white', borderColor: '#ef4444' }}>
               Confirmar Eliminación
             </Button>
           </div>

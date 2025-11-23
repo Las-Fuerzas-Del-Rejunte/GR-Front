@@ -25,7 +25,7 @@
     @apply bg-white/70 border border-white/40 shadow-md backdrop-blur-lg;
   }
   .glass-hover {
-    @apply transition-colors transition-shadow hover:bg-white/70 hover:shadow-md;
+    @apply transition-all hover:bg-white/70 hover:shadow-md;
   }
   .glass-panel {
     @apply bg-white/75 border border-white/30 shadow-xl backdrop-blur-xl rounded-xl;
@@ -54,5 +54,30 @@
   }
   .nice-scroll::-webkit-scrollbar-thumb:hover {
     background-color: rgba(0,0,0,0.35);
+  }
+
+  /* Animación fade-in */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+
+  /* Animación shimmer para skeletons */
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  .animate-shimmer {
+    animation: shimmer 2s infinite;
   }
 }

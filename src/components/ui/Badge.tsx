@@ -3,13 +3,23 @@ import { useStatuses } from '../../context/StatusContext';
 
 interface BadgeProps {
   status: ClaimStatus;
+  statusName?: string;
+  statusColor?: string;
 }
 
-const Badge = ({ status }: BadgeProps) => {
+const Badge = ({ status, statusName, statusColor }: BadgeProps) => {
   const { statuses } = useStatuses();
 
-  const statusConfig = statuses.find(s => s.name === status);
-  const color = statusConfig?.color || 'gray';
+  // Priorizar el statusName recibido directamente desde el API
+  const displayName = statusName || status;
+  
+  // Priorizar el color del API, sino buscar en statuses locales
+  let color = statusColor;
+  if (!color) {
+    // Buscar primero por statusName (nombre legible), sino por status (UUID o id)
+    const statusConfig = statuses.find(s => s.name === statusName || s.name === status || s.id === status);
+    color = statusConfig?.color || 'gray';
+  }
 
   const colorClasses = {
     blue: 'bg-blue-100 text-blue-700',
@@ -25,7 +35,7 @@ const Badge = ({ status }: BadgeProps) => {
 
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses[color as keyof typeof colorClasses]}`}>
-      {status}
+      {displayName}
     </span>
   );
 };

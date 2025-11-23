@@ -72,10 +72,12 @@ export interface AuditEvent {
 export interface Claim {
   id: string;
   subject: string;
-  customerName: string;
+  customerName: string;          // Mantener para compatibilidad (nombre del cliente)
   contactInfo: string;
   description: string;
   status: ClaimStatus;
+  statusName?: string;           // Nombre legible del estado (ej: "Nuevo", "En Proceso")
+  statusColor?: string;          // Color del estado desde el backend
   subStatus?: string;            // Sub-estado actual dentro del estado principal
   assignedTo?: User[] | null;
   priority?: 'low' | 'medium' | 'high' | 'urgent';
@@ -85,6 +87,8 @@ export interface Claim {
   auditHistory: AuditEvent[];
   resolutionSummary?: string;    // Resumen de resolución (requerido en estado "Resuelto")
   isLocked?: boolean;            // Indica si el reclamo está bloqueado para edición
+  projectId?: string;            // ID del proyecto al que pertenece
+  clientId?: string;             // ID del cliente asociado
 }
 
 export interface ClaimNote {
@@ -114,4 +118,38 @@ export interface User {
   phone?: string;
   department?: string;
   position?: string;
+}
+
+export interface ProjectType {
+  id: string;
+  description: string;
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Client {
+  id: string;
+  name: string;
+  lastName: string;
+  fullName: string;
+  email: string;
+  phone?: string;
+  company?: string;
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  clientId: string;
+  projectTypeId: string;
+  active: boolean;
+  client: Client;
+  projectType: ProjectType;
+  createdAt: Date;
+  updatedAt: Date;
 }
