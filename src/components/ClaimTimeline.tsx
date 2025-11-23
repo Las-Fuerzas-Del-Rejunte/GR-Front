@@ -140,7 +140,21 @@ const ClaimTimeline = ({ events }: ClaimTimelineProps) => {
   const getEventDescription = (event: AuditEvent): string => {
     const { details } = event;
     
-    // Si el backend proporciona una descripción, usarla directamente
+    // Para estados: construir descripción usando los nombres legibles
+    if (event.type === 'status_changed' && (details.previousName || details.newName)) {
+      const prevStatus = details.previousName || 'Sin estado';
+      const newStatus = details.newName || 'N/A';
+      return `Estado cambiado de "${prevStatus}" a "${newStatus}"`;
+    }
+    
+    // Para sub-estados: construir descripción usando los nombres legibles
+    if (event.type === 'substatus_changed' && (details.previousName || details.newName)) {
+      const prevSubStatus = details.previousName || 'Sin sub-estado';
+      const newSubStatus = details.newName || 'N/A';
+      return `Sub-estado cambiado de "${prevSubStatus}" a "${newSubStatus}"`;
+    }
+    
+    // Si el backend proporciona una descripción, usarla
     if (details.description) {
       return details.description;
     }
@@ -151,9 +165,14 @@ const ClaimTimeline = ({ events }: ClaimTimelineProps) => {
         return `Reclamo iniciado por ${event.user}`;
       
       case 'status_changed':
-        const prevStatus = typeof details.previousValue === 'string' ? details.previousValue : 'Sin estado';
-        const newStatus = typeof details.newValue === 'string' ? details.newValue : 'Nuevo estado';
+        const prevStatus = details.previousName || details.previousValue || 'Sin estado';
+        const newStatus = details.newName || details.newValue || 'Nuevo estado';
         return `Estado cambiado de "${prevStatus}" a "${newStatus}"`;
+      
+      case 'substatus_changed':
+        const prevSubStatus = details.previousName || details.previousValue || 'Sin sub-estado';
+        const newSubStatus = details.newName || details.newValue;
+        return `Sub-estado cambiado de "${prevSubStatus}" a "${newSubStatus}"`;
       
       case 'assigned':
         if (Array.isArray(details.newValue)) {
@@ -184,9 +203,6 @@ const ClaimTimeline = ({ events }: ClaimTimelineProps) => {
         const prev = priorityMap[details.previousValue] || details.previousValue || 'Sin prioridad';
         const curr = priorityMap[details.newValue] || details.newValue;
         return `Prioridad cambiada de "${prev}" a "${curr}"`;
-      
-      case 'substatus_changed':
-        return `Sub-estado cambiado de "${details.previousValue || 'Sin sub-estado'}" a "${details.newValue}"`;
       
       case 'note_added':
         return details.description || 'Se agregó una nota de seguimiento';

@@ -200,6 +200,8 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
                       <button
                         onClick={() => {
                           assignClaim(claimId, null);
+                          setShowAssignMenu(false);
+                          setAssignQuery('');
                         }}
                         className={`w-full px-3 py-2 rounded-md text-left hover:bg-gray-100 transition-colors flex items-center gap-3 ${!claim.assignedTo || claim.assignedTo.length === 0 ? 'bg-blue-50 ring-2 ring-blue-500' : ''}`}
                       >
@@ -221,14 +223,13 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
                             <button
                               key={user.id}
                               onClick={() => {
-                                const current = claim.assignedTo || [];
-                                let next: typeof current = [];
-                                if (selected) {
-                                  next = current.filter(u => u.id !== user.id);
-                                } else {
-                                  next = [...current, user];
+                                // Comportamiento de radio button: solo un usuario puede estar asignado
+                                // Si ya está seleccionado, no hacer nada (debe usar "Sin asignar" para quitar)
+                                if (!selected) {
+                                  assignClaim(claimId, [user]);
+                                  setShowAssignMenu(false);
+                                  setAssignQuery('');
                                 }
-                                assignClaim(claimId, next.length > 0 ? next : null);
                               }}
                               className={`w-full px-3 py-2 rounded-md text-left hover:bg-gray-100 transition-colors flex items-center gap-3 ${selected ? 'bg-blue-50 ring-2 ring-blue-500' : ''}`}
                             >

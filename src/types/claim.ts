@@ -64,6 +64,8 @@ export interface AuditEvent {
   details: {
     previousValue?: any;
     newValue?: any;
+    previousName?: string | null;  // Nombre legible del valor anterior
+    newName?: string | null;       // Nombre legible del valor nuevo
     description?: string;
     area?: string;
   };

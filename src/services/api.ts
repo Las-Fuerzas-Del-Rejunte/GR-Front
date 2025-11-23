@@ -422,10 +422,13 @@ export const claimsAPI = {
         
         // Mapear tipo_evento a los tipos del frontend
         const tipoMap: Record<string, AuditEvent['type']> = {
+          'creacion': 'created',
           'created': 'created',
+          'actualizacion': 'updated',
           'status_changed': 'status_changed',
-          'sub_status_changed': 'substatus_changed', // ✅ Backend usa sub_status_changed
+          'sub_status_changed': 'substatus_changed',
           'substatus_changed': 'substatus_changed',
+          'asignacion': 'assigned',
           'assigned': 'assigned',
           'unassigned': 'unassigned',
           'reassigned': 'reassigned',
@@ -437,7 +440,15 @@ export const claimsAPI = {
           'resolution_added': 'resolution_added'
         };
         
-        const type = tipoMap[evento.tipo_evento] || 'updated';
+        // Detectar tipo específico basado en el campo modificado
+        let type = tipoMap[evento.tipo_evento] || 'updated';
+        if (type === 'updated' && evento.cambios?.campo) {
+          const campo = evento.cambios.campo;
+          if (campo === 'estado_id') type = 'status_changed';
+          else if (campo === 'sub_estado_id') type = 'substatus_changed';
+          else if (campo === 'asignado_a') type = 'assigned';
+          else if (campo === 'prioridad') type = 'priority_changed';
+        }
         
         return {
           id: eventId,
@@ -449,6 +460,8 @@ export const claimsAPI = {
           details: {
             previousValue: evento.cambios?.valor_anterior,
             newValue: evento.cambios?.valor_nuevo || evento.cambios,
+            previousName: evento.cambios?.nombre_anterior,
+            newName: evento.cambios?.nombre_nuevo,
             description: evento.descripcion,
             area: evento.area_usuario
           }
