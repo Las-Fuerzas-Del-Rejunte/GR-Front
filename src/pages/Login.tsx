@@ -114,10 +114,9 @@ const Login = () => {
 
           <div className="mt-8 pt-6 border-t border-gray-200">
             <div className="bg-blue-50 rounded-lg p-4">
-              <p className="text-xs font-semibold text-blue-900 mb-2">Credenciales de prueba:</p>
+              <p className="text-xs font-semibold text-blue-900 mb-2">Informacion:</p>
               <div className="space-y-1 text-xs text-blue-800">
-                <p><strong>Admin:</strong> admin@sistema.com / admin123</p>
-                <p><strong>Agente:</strong> agente@sistema.com / agente123</p>
+                <p>Ingresa con tus credenciales, en caso de no tener, contacta con tu <strong>Administrador </strong>asociado</p>
               </div>
             </div>
           </div>

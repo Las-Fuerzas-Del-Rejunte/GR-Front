@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useClaims } from '../context/ClaimsContext';
 import { useUsers } from '../context/UsersContext';
+import { useAuth } from '../context/AuthContext';
 import { AuditEvent } from '../types/claim';
 import { claimsAPI } from '../services/api';
 import Badge from './ui/Badge';
@@ -18,6 +19,7 @@ interface ClaimDetailViewProps {
 const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
   const { getClaimById, addClaimNote, assignClaim, updateClaimPriority, isUpdating } = useClaims();
   const { users } = useUsers();
+  const { user } = useAuth();
   const claim = getClaimById(claimId);
   const [newNote, setNewNote] = useState('');
   const [showAssignMenu, setShowAssignMenu] = useState(false);
@@ -27,6 +29,9 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
   const [loadingAudit, setLoadingAudit] = useState(false);
   const assignMenuRef = useRef<HTMLDivElement | null>(null);
   const priorityMenuRef = useRef<HTMLDivElement | null>(null);
+
+  // Verificar si el usuario es viewer (solo lectura)
+  const isViewer = user?.role === 'viewer';
 
   // Función para cargar historial de auditoría
   const loadAuditHistory = async () => {
@@ -158,7 +163,7 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
                     if (!next) setAssignQuery('');
                     setShowPriorityMenu(false);
                   }}
-                  disabled={isUpdating}
+                  disabled={isUpdating || isViewer}
                   className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-200 text-left flex items-center justify-between group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isUpdating ? (
@@ -269,7 +274,8 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
                     setShowPriorityMenu(!showPriorityMenu);
                     setShowAssignMenu(false);
                   }}
-                  className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-200 text-left flex items-center justify-between group"
+                  disabled={isViewer}
+                  className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-200 text-left flex items-center justify-between group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {claim.priority ? (
                     <div className="flex items-center gap-2">
@@ -339,7 +345,7 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
 
       <Card className="p-6 relative z-20">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Gestión de Estado y Flujo</h3>
-        <StatusManager claim={claim} />
+        <StatusManager claim={claim} isViewer={isViewer} />
       </Card>
 
       <Card className="p-6">
@@ -399,19 +405,21 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
           )}
         </div>
 
-        <div className="border-t border-gray-200 pt-6">
-          <TextArea
-            placeholder="Escriba una nota de seguimiento..."
-            value={newNote}
-            onChange={(e) => setNewNote(e.target.value)}
-            rows={3}
-          />
-          <div className="flex justify-end mt-3">
-            <Button onClick={handleAddNote} disabled={!newNote.trim()}>
-              Añadir Seguimiento
-            </Button>
+        {!isViewer && (
+          <div className="border-t border-gray-200 pt-6">
+            <TextArea
+              placeholder="Escriba una nota de seguimiento..."
+              value={newNote}
+              onChange={(e) => setNewNote(e.target.value)}
+              rows={3}
+            />
+            <div className="flex justify-end mt-3">
+              <Button onClick={handleAddNote} disabled={!newNote.trim()}>
+                Añadir Seguimiento
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </Card>
     </div>
   );

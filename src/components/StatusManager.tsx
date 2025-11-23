@@ -9,9 +9,10 @@ import Modal from './ui/Modal';
 
 interface StatusManagerProps {
   claim: Claim;
+  isViewer?: boolean;
 }
 
-const StatusManager = ({ claim }: StatusManagerProps) => {
+const StatusManager = ({ claim, isViewer = false }: StatusManagerProps) => {
   const { getStatusConfig, getSubStatuses, canPerformAction, getAvailableTransitions, loadSubStatuses } = useStatuses();
   const { updateClaimStatus, updateClaimSubStatus, isUpdating } = useClaims();
   
@@ -170,7 +171,7 @@ const StatusManager = ({ claim }: StatusManagerProps) => {
           <div className="relative">
             <button
               onClick={() => setShowStatusMenu(!showStatusMenu)}
-              disabled={isLocked}
+              disabled={isLocked || isViewer}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-200 text-left flex items-center justify-between group disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="flex items-center gap-2">
@@ -245,7 +246,7 @@ const StatusManager = ({ claim }: StatusManagerProps) => {
           <div className="relative">
             <button
               onClick={() => setShowSubStatusMenu(!showSubStatusMenu)}
-              disabled={isUpdating}
+              disabled={isUpdating || isViewer}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-purple-400 hover:bg-purple-50/30 transition-all duration-200 text-left flex items-center justify-between group disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isUpdating ? (

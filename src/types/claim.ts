@@ -119,7 +119,6 @@ export interface User {
   role: string;
   phone?: string;
   department?: string;
-  position?: string;
 }
 
 export interface ProjectType {

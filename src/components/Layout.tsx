@@ -122,18 +122,20 @@ const Layout = () => {
                       <User className="w-4 h-4" />
                       <span>Mi Perfil</span>
                     </NavLink>
-                    <NavLink
-                      to="/configuracion"
-                      onClick={() => setShowUserMenu(false)}
-                      className={({ isActive }) =>
-                        `w-full flex items-center space-x-2 px-4 py-2.5 text-sm ${
-                          isActive ? 'text-neutral-900 bg-neutral-100' : 'text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900'
-                        } transition-colors`
-                      }
-                    >
-                      <Settings className="w-4 h-4" />
-                      <span>Configuración</span>
-                    </NavLink>
+                    {user?.role !== 'viewer' && (
+                      <NavLink
+                        to="/configuracion"
+                        onClick={() => setShowUserMenu(false)}
+                        className={({ isActive }) =>
+                          `w-full flex items-center space-x-2 px-4 py-2.5 text-sm ${
+                            isActive ? 'text-neutral-900 bg-neutral-100' : 'text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900'
+                          } transition-colors`
+                        }
+                      >
+                        <Settings className="w-4 h-4" />
+                        <span>Configuración</span>
+                      </NavLink>
+                    )}
                     <div className="border-t border-neutral-200 my-1" />
                     <button
                       onClick={handleLogout}

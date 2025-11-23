@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult, DragUpdate, DragStart } from '@hello-pangea/dnd';
 import { useClaims } from '../context/ClaimsContext';
 import { useStatuses } from '../context/StatusContext';
+import { useAuth } from '../context/AuthContext';
 import { ClaimStatus } from '../types/claim';
 import KanbanCard from '../components/KanbanCard';
 import Button from '../components/ui/Button';
@@ -17,12 +18,16 @@ interface KanbanBoardProps {
 const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail, onCreateClaimWithStatus }: KanbanBoardProps) => {
   const { claims, updateClaimStatus, searchClaims, loading, isUpdating } = useClaims();
   const { statuses, reorderStatuses } = useStatuses();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatuses, setSelectedStatuses] = useState<ClaimStatus[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement | null>(null);
   const [draggedClaimId, setDraggedClaimId] = useState<string | null>(null);
   const [dragDestination, setDragDestination] = useState<{ droppableId: string; index: number } | null>(null);
+
+  // Verificar si el usuario es viewer (solo lectura)
+  const isViewer = user?.role === 'viewer';
 
   const filteredClaims = useMemo(() => {
     let result = searchQuery ? searchClaims(searchQuery) : claims;
@@ -60,10 +65,14 @@ const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail, onCreateClaimWithStatu
   }, [filteredClaims, statuses]);
 
   const handleDragStart = (start: DragStart) => {
+    // Prevenir drag si es viewer
+    if (isViewer) return;
     setDraggedClaimId(start.draggableId);
   };
 
   const handleDragUpdate = (update: DragUpdate) => {
+    // Prevenir drag si es viewer
+    if (isViewer) return;
     if (update.destination) {
       setDragDestination({
         droppableId: update.destination.droppableId,
@@ -79,6 +88,9 @@ const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail, onCreateClaimWithStatu
 
     setDraggedClaimId(null);
     setDragDestination(null);
+
+    // Prevenir cualquier acción si es viewer
+    if (isViewer) return;
 
     if (!destination) return;
 
@@ -184,11 +196,15 @@ const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail, onCreateClaimWithStatu
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Reclamos</h1>
-          <p className="text-sm text-gray-600 mt-1">Tablero Kanban interactivo</p>
+          <p className="text-sm text-gray-600 mt-1">
+            {isViewer ? 'Vista de solo lectura' : 'Tablero Kanban interactivo'}
+          </p>
         </div>
-        <Button onClick={onOpenNewClaim} size="lg">
-          Nuevo reclamo
-        </Button>
+        {!isViewer && (
+          <Button onClick={onOpenNewClaim} size="lg">
+            Nuevo reclamo
+          </Button>
+        )}
       </div>
 
       <div className="flex items-center space-x-4">
@@ -271,7 +287,7 @@ const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail, onCreateClaimWithStatu
                 {...provided.droppableProps}
               >
                 {statuses.map((status, index) => (
-                  <Draggable key={status.id} draggableId={status.id} index={index}>
+                  <Draggable key={status.id} draggableId={status.id} index={index} isDragDisabled={isViewer}>
                     {(provided, snapshot) => (
                       <div 
                         ref={provided.innerRef}
@@ -280,7 +296,7 @@ const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail, onCreateClaimWithStatu
                       >
                         <div 
                           {...provided.dragHandleProps}
-                          className={`rounded-t-lg border-t-4 ${getColumnColors(status.color)} px-4 py-3 cursor-move`}
+                          className={`rounded-t-lg border-t-4 ${getColumnColors(status.color)} px-4 py-3 ${isViewer ? 'cursor-default' : 'cursor-move'}`}
                         >
                           <div className="flex items-center justify-between">
                             <h2 className="font-semibold text-gray-900">{status.name}</h2>
@@ -314,7 +330,7 @@ const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail, onCreateClaimWithStatu
                                         <DropPreview />
                                       </div>
                                     )}
-                                    <Draggable draggableId={claim.id} index={index}>
+                                    <Draggable draggableId={claim.id} index={index} isDragDisabled={isViewer}>
                                       {(provided, snapshot) => (
                                         <div
                                           ref={provided.innerRef}
@@ -341,8 +357,8 @@ const KanbanBoard = ({ onOpenNewClaim, onOpenClaimDetail, onCreateClaimWithStatu
                                   <DropPreview />
                                 )}
                               
-                              {/* Botón para agregar nuevo reclamo - solo visible cuando no está cargando */}
-                              {!loading && (
+                              {/* Botón para agregar nuevo reclamo - solo visible cuando no está cargando y no es viewer */}
+                              {!loading && !isViewer && (
                                 <button
                                   onClick={() => onCreateClaimWithStatus ? onCreateClaimWithStatus(status.name) : onOpenNewClaim()}
                                   className="w-full mt-2 p-3 rounded-lg border-2 border-dashed border-neutral-300 hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-200 flex items-center justify-center gap-2 text-neutral-600 hover:text-blue-600 group"

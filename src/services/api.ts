@@ -50,7 +50,6 @@ interface UsuarioBackend {
   rol: string;
   telefono?: string;
   departamento?: string;
-  posicion?: string;
   creado_en: string;
   actualizado_en: string;
 }
@@ -80,7 +79,6 @@ const mapUsuarioToUser = (usuario: UsuarioBackend): User => {
     role: usuario.rol,
     phone: usuario.telefono,
     department: usuario.departamento,
-    position: usuario.posicion,
   };
 };
 
@@ -284,11 +282,11 @@ export const usersAPI = {
       rol: userData.role,
       telefono: userData.phone,
       departamento: userData.department,
-      posicion: userData.position,
       contrasena: userData.password,
     };
-    const response = await api.post('/api/v1/usuarios', payload);
-    return response.data;
+    const response = await api.post('/api/v1/usuarios/crearUsuarioRol', payload);
+    // Mapear la respuesta del backend al formato del frontend
+    return mapUsuarioToUser(response.data);
   },
 
   update: async (id: string, updates: Partial<User>): Promise<User> => {
@@ -296,11 +294,11 @@ export const usersAPI = {
     if (updates.name) payload.nombre = updates.name;
     if (updates.phone) payload.telefono = updates.phone;
     if (updates.department) payload.departamento = updates.department;
-    if (updates.position) payload.posicion = updates.position;
     if (updates.role) payload.rol = updates.role;
 
     const response = await api.patch(`/api/v1/usuarios/${id}`, payload);
-    return response.data;
+    // Mapear la respuesta del backend al formato del frontend
+    return mapUsuarioToUser(response.data);
   },
 
   delete: async (id: string): Promise<void> => {
