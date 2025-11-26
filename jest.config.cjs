@@ -9,9 +9,9 @@ module.exports = {
 
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
 
-  moduleNameMapper: {
-    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
-    '\\.(jpg|jpeg|png|gif|svg)$': '<rootDir>/tests/__mocks__/fileMock.js'
+ moduleNameMapper: {
+    "\\.(jpg|jpeg|png|gif|svg)$": "<rootDir>/src/test/__mocks__/fileMock.js",
+    "\\.(css|less|scss)$": "<rootDir>/src/test/__mocks__/styleMock.js"
   },
 
   collectCoverageFrom: [
@@ -21,3 +21,6 @@ module.exports = {
   ],
   coverageReporters: ["text", "lcov"]
 };
+
+
+
