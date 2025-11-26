@@ -5,9 +5,8 @@ import { AuthProvider, useAuth } from '../../context/AuthContext';
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 
 
-//
+
 // Componente auxiliar para acceder al contexto
-//
 const TestConsumer = () => {
   const { user, login, logout, recoverPassword, updateUser, isAuthenticated } = useAuth();
   return (
@@ -27,9 +26,7 @@ const TestConsumer = () => {
   );
 };
 
-//
 // Mock del localStorage
-//
 beforeEach(() => {
   jest.spyOn(Storage.prototype, 'setItem');
   jest.spyOn(Storage.prototype, 'getItem').mockReturnValue(null);

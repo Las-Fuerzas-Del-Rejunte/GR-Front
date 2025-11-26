@@ -9,8 +9,14 @@ module.exports = {
 
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
 
- moduleNameMapper: {
+  moduleNameMapper: {
+    // Alias de tu app
+    "^@/(.*)$": "<rootDir>/src/$1",
+
+    // Mock de imágenes
     "\\.(jpg|jpeg|png|gif|svg)$": "<rootDir>/src/test/__mocks__/fileMock.js",
+
+    // Mock de estilos
     "\\.(css|less|scss)$": "<rootDir>/src/test/__mocks__/styleMock.js"
   },
 
@@ -19,8 +25,6 @@ module.exports = {
     "!src/main.tsx",
     "!src/index.tsx"
   ],
+
   coverageReporters: ["text", "lcov"]
 };
-
-
-

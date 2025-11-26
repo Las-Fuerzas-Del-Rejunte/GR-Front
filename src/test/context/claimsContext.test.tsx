@@ -95,11 +95,11 @@ const setup = () =>
     </ClaimsProvider>
   );
 
-// ---------------------
-// TESTS
-// ---------------------
+
+//Pruebas
 
 describe('ClaimsContext', () => {
+
   it('addClaim agrega reclamo nuevo', () => {
     setup();
 
@@ -109,6 +109,7 @@ describe('ClaimsContext', () => {
     expect(screen.getByTestId('first-subject').textContent).toBe('Nuevo reclamo');
   });
 
+
   it('updateClaimStatus actualiza estado', () => {
     setup();
     fireEvent.click(screen.getByText('add-claim'));
@@ -117,6 +118,7 @@ describe('ClaimsContext', () => {
     expect(screen.getByTestId('first-status').textContent).toBe('closed');
   });
 
+
   it('addClaimNote agrega una nota', () => {
     setup();
     fireEvent.click(screen.getByText('add-claim'));
@@ -124,6 +126,7 @@ describe('ClaimsContext', () => {
 
     expect(screen.getByTestId('notes-count').textContent).toBe('1');
   });
+
 
   it('deleteClaim elimina un reclamo', () => {
     setup();
@@ -140,6 +143,7 @@ describe('ClaimsContext', () => {
     expect(screen.getByTestId('first-subject').textContent).not.toBe(nuevo);
     });
 
+
   it('assignClaim asigna un usuario', () => {
     setup();
     fireEvent.click(screen.getByText('add-claim'));
@@ -147,6 +151,7 @@ describe('ClaimsContext', () => {
 
     expect(screen.getByTestId('assigned-to').textContent).toBe('Pepe');
   });
+
 
   it('updateClaimPriority actualiza prioridad', () => {
     setup();
@@ -156,6 +161,7 @@ describe('ClaimsContext', () => {
     expect(screen.getByTestId('first-priority').textContent).toBe('urgent');
   });
 
+  
   it('searchClaims ejecuta búsqueda sin romper', () => {
     setup();
     fireEvent.change(screen.getByTestId('search-input'), {

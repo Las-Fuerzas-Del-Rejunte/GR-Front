@@ -126,10 +126,12 @@ describe("KanbanBoard", () => {
       />
     );
 
+
   it("renderiza el título principal", () => {
     renderBoard();
     expect(screen.getByText("Vista de Reclamos")).toBeInTheDocument();
   });
+
 
   it("muestra las columnas según los statuses mock", () => {
     renderBoard();
@@ -137,12 +139,14 @@ describe("KanbanBoard", () => {
     expect(screen.getByText("En Progreso")).toBeInTheDocument();
   });
 
+
   it("renderiza los reclamos en las columnas correctas", () => {
     renderBoard();
     expect(screen.getAllByTestId("kanban-card").length).toBe(2);
     expect(screen.getByText("Juan Pérez")).toBeInTheDocument();
     expect(screen.getByText("Ana Gómez")).toBeInTheDocument();
   });
+
 
   it("filtra reclamos al escribir en el buscador", () => {
     renderBoard();
@@ -157,6 +161,7 @@ describe("KanbanBoard", () => {
     expect(screen.queryByText("Ana Gómez")).toBeNull();
   });
 
+  
   it("ejecuta onOpenNewClaim al presionar el botón", () => {
     renderBoard();
     fireEvent.click(screen.getByText("Nuevo reclamo"));

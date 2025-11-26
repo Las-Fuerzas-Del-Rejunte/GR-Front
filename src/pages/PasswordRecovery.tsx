@@ -44,12 +44,16 @@ const PasswordRecovery = () => {
           {!success ? (
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-1.5"
+                >
                   Correo Electrónico
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
+                    id="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}

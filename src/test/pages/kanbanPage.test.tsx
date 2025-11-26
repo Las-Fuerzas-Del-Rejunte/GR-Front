@@ -7,8 +7,7 @@ import { describe, it, expect, jest, beforeEach} from "@jest/globals";
 const mockDeleteClaim = jest.fn();
 const mockShowToast = jest.fn();
 
-// ---- MOCK KANBANBOARD ----
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// ---- MOCK KANBANBOARD ---- 
 jest.mock("../../pages/KanbanBoard", () => (props: any) => (
   <div>
     <button onClick={() => props.onOpenNewClaim()}>open-new</button>
@@ -51,6 +50,7 @@ describe("KanbanPage", () => {
     jest.clearAllMocks();
   });
 
+
   it("abre y cierra el modal de nuevo reclamo", () => {
     render(<KanbanPage />);
 
@@ -60,6 +60,7 @@ describe("KanbanPage", () => {
     fireEvent.click(screen.getByText("Cancelar"));
     expect(screen.queryByText("Registrar Nuevo Reclamo")).not.toBeInTheDocument();
   });
+
 
   it("abre y cierra el modal de detalle de reclamo", () => {
     render(<KanbanPage />);
@@ -71,6 +72,7 @@ describe("KanbanPage", () => {
     expect(screen.queryByText("Detalle del Reclamo")).not.toBeInTheDocument();
   });
 
+  
   it("ejecuta deleteClaim y showToast al confirmar eliminación", () => {
     render(<KanbanPage />);
 

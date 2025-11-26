@@ -63,6 +63,7 @@ jest.mock('../../context/StatusContext', () => ({
 }));
 
 describe('Dashboard Page', () => {
+
   it('renderiza el título principal', () => {
     render(
       <Dashboard />
@@ -70,26 +71,31 @@ describe('Dashboard Page', () => {
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
   });
 
+
   it('renderiza AreaChartCards con los datos correctos', () => {
     render(<Dashboard />);
     expect(screen.getByTestId('area-chart-cards')).toBeInTheDocument();
   });
+
 
   it('muestra la sección de Distribución por Estado', () => {
     render(<Dashboard />);
     expect(screen.getByText('Distribución por Estado')).toBeInTheDocument();
   });
 
+
   it('muestra exactamente 2 estados (según mockStatuses)', () => {
     render(<Dashboard />);
     expect(screen.getAllByText(/Nuevo|Resuelto/).length).toBeGreaterThanOrEqual(2);
   });
+
 
   it('muestra la sección de Actualizaciones Recientes', () => {
     render(<Dashboard />);
     expect(screen.getByText('Actualizaciones Recientes')).toBeInTheDocument();
   });
 
+  
   it('renderiza las tarjetas de reclamos recientes', () => {
     render(<Dashboard />);
     expect(screen.getByText('Juan Pérez')).toBeInTheDocument();

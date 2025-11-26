@@ -65,6 +65,7 @@ describe('StatusContext', () => {
   expect(screen.getByTestId('first-name').textContent).toBe('Nuevo');
 });
 
+
 it('addStatus agrega un estado nuevo', () => {
   setup();
 
@@ -74,6 +75,7 @@ it('addStatus agrega un estado nuevo', () => {
   expect(Storage.prototype.setItem).toHaveBeenCalled();
 });
 
+
 it('updateStatus actualiza el nombre y color de un estado', () => {
   setup();
 
@@ -82,6 +84,7 @@ it('updateStatus actualiza el nombre y color de un estado', () => {
   expect(screen.getByTestId('first-name').textContent).toBe('Actualizado');
   expect(screen.getByTestId('first-color').textContent).toBe('red');
 });
+
 
 it('deleteStatus elimina un estado', () => {
   setup();
@@ -93,6 +96,7 @@ it('deleteStatus elimina un estado', () => {
   expect(screen.getByTestId('count').textContent).toBe('3');
   expect(screen.getByTestId('first-name').textContent).not.toBe(firstName);
 });
+
 
 it('reorderStatuses mueve el primer estado al final', () => {
   setup();
