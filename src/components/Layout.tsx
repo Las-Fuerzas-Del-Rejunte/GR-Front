@@ -87,6 +87,7 @@ const Layout = () => {
             {/* Derecha: Usuario */}
             <div className="flex items-center gap-2 relative">
               <button
+                data-testid="mobile-menu-toggle"
                 className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg hover:bg-neutral-100"
                 aria-label="Abrir menú"
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
@@ -95,6 +96,7 @@ const Layout = () => {
               </button>
               <div className="hidden md:block" ref={userMenuRef}>
                 <button
+                  data-testid="desktop-user-btn"
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex items-center space-x-3 hover:bg-neutral-50 px-3 py-2 rounded-lg transition-colors"
                 >
@@ -150,7 +152,7 @@ const Layout = () => {
         </div>
 
         {showMobileMenu && (
-          <div className="md:hidden border-t border-neutral-200 bg-white">
+          <div data-testid="mobile-menu" className="md:hidden border-t border-neutral-200 bg-white">
             <div className="max-w-7xl mx-auto px-6 py-3 space-y-1">
               <NavLink
                 to="/"
@@ -180,6 +182,7 @@ const Layout = () => {
               </NavLink>
               <div className="my-2 border-t border-neutral-200" />
               <button
+                data-testid="mobile-user-menu-btn"
                 className="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium hover:bg-neutral-50"
                 onClick={() => setShowMobileUserMenu(!showMobileUserMenu)}
               >
