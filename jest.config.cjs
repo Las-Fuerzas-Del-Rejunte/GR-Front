@@ -17,7 +17,9 @@ module.exports = {
     "\\.(jpg|jpeg|png|gif|svg)$": "<rootDir>/src/test/__mocks__/fileMock.js",
 
     // Mock de estilos
-    "\\.(css|less|scss)$": "<rootDir>/src/test/__mocks__/styleMock.js"
+    "\\.(css|less|scss)$": "<rootDir>/src/test/__mocks__/styleMock.js",
+
+    "^recharts$": "<rootDir>/__mocks__/recharts.js"
   },
 
   collectCoverageFrom: [
