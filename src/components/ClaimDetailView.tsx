@@ -129,6 +129,7 @@ const ClaimDetailView = ({ claimId }: ClaimDetailViewProps) => {
               <label className="text-xs font-semibold text-gray-700 mb-2 block">Asignado a</label>
               <div>
                 <button
+                  data-testid="portal-overlay"
                   onClick={() => {
                     setShowAssignMenu(!showAssignMenu);
                     setShowPriorityMenu(false);

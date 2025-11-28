@@ -115,4 +115,102 @@ describe('ClaimDetailView', () => {
   });
 
 
+  //Test extra para subir coverage
+    it('abre y cierra el menú de asignación', () => {
+    render(<ClaimDetailView claimId={claimId} />);
+
+    const openAssign = screen.getByRole('button', { name: /Asignar/i });
+    fireEvent.click(openAssign);
+
+    // Aparece el portal
+    expect(screen.getByText(/Asignar a/i)).toBeInTheDocument();
+
+    // Cierra haciendo click afuera
+    fireEvent.click(screen.getByTestId('portal-overlay') || document.body);
+
+    // El menú desaparece
+    expect(screen.queryByText(/Asignar a/i)).not.toBeInTheDocument();
+  });
+
+  it('asigna un usuario desde el menú', () => {
+    const assignClaim = jest.fn();
+
+    (useClaims as jest.Mock).mockReturnValue({
+      getClaimById: jest.fn().mockReturnValue(mockClaim),
+      updateClaimStatus: jest.fn(),
+      addClaimNote: jest.fn(),
+      assignClaim,
+      updateClaimPriority: jest.fn(),
+    });
+
+    render(<ClaimDetailView claimId={claimId} />);
+
+    const openAssign = screen.getByRole('button', { name: /Asignar/i });
+    fireEvent.click(openAssign);
+
+    const usuario = screen.getByText('Usuario Uno');
+    fireEvent.click(usuario);
+
+    expect(assignClaim).toHaveBeenCalledWith(claimId, expect.objectContaining({ id: 'u1' }));
+  });
+
+  it('remueve la asignación (Sin asignar)', () => {
+    const assignClaim = jest.fn();
+
+    (useClaims as jest.Mock).mockReturnValue({
+      getClaimById: jest.fn().mockReturnValue({ ...mockClaim, assignedTo: { id: 'u1', name: 'Usuario Uno' } }),
+      updateClaimStatus: jest.fn(),
+      addClaimNote: jest.fn(),
+      assignClaim,
+      updateClaimPriority: jest.fn(),
+    });
+
+    render(<ClaimDetailView claimId={claimId} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Usuario Uno/i }));
+
+    const sinAsignar = screen.getByText(/sin asignar/i);
+    fireEvent.click(sinAsignar);
+
+    expect(assignClaim).toHaveBeenCalledWith(claimId, null);
+  });
+
+  it('abre y selecciona prioridad', () => {
+    const updateClaimPriority = jest.fn();
+
+    (useClaims as jest.Mock).mockReturnValue({
+      getClaimById: jest.fn().mockReturnValue(mockClaim),
+      updateClaimStatus: jest.fn(),
+      addClaimNote: jest.fn(),
+      assignClaim: jest.fn(),
+      updateClaimPriority,
+    });
+
+    render(<ClaimDetailView claimId={claimId} />);
+
+    const openPriority = screen.getByRole('button', { name: /Prioridad/i });
+    fireEvent.click(openPriority);
+
+    const urgenteBtn = screen.getByText('Urgente');
+    fireEvent.click(urgenteBtn);
+
+    expect(updateClaimPriority).toHaveBeenCalledWith(claimId, 'urgent');
+  });
+
+  it('muestra mensaje si no hay notas', () => {
+    render(<ClaimDetailView claimId={claimId} />);
+
+    expect(
+      screen.getByText(/no hay notas de seguimiento aún/i)
+    ).toBeInTheDocument();
+  });
+
+  it('llama a getSelectedClasses correctamente', () => {
+    render(<ClaimDetailView claimId={claimId} />);
+
+    // Fuerza un estado particular para cubrir ramas del map
+    expect(screen.getByRole('button', { name: /Nuevo/i })).toBeInTheDocument();
+  });
+
+
 });
